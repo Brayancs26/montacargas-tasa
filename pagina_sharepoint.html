@@ -1,0 +1,799 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="theme-color" content="#0a1628">
+<title>Registro de Mantenimiento — Flota TASA</title>
+
+<!-- ═══════════════════════════════════════════════
+     CONFIGURACIÓN — PEGAR LOS DATOS DE IT AQUÍ
+═══════════════════════════════════════════════ -->
+<script>
+const CONFIG = {
+  CLIENT_ID:       "PEGAR-CLIENT-ID-AQUI",          // Dato 1 de IT
+  TENANT_ID:       "PEGAR-TENANT-ID-AQUI",           // Dato 2 de IT
+  SHAREPOINT_URL:  "https://TUEMPRESA.sharepoint.com", // URL de tu SharePoint
+  SITE_PATH:       "/sites/NOMBRE-DEL-SITIO",         // Ruta del sitio
+  EXCEL_FILENAME:  "registro_mantenimiento_tasa.xlsx", // Nombre exacto del archivo
+  EXCEL_PATH:      "/Documentos compartidos/",         // Carpeta donde está el archivo
+  SHEET_REGISTRO:  "REGISTRO_MANTENIMIENTO",           // Nombre de la hoja de registros
+  SHEET_BD:        "BD_MONTACARGAS",                   // Nombre de la hoja maestra
+};
+</script>
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap');
+
+:root {
+  --bg:     #0a1628; --surf:  #111e33; --surf2: #182540; --surf3: #1e2e4a;
+  --bord:   rgba(255,255,255,0.07); --bord2: rgba(255,255,255,0.13);
+  --accent: #2563eb; --green: #10b981; --amber: #f59e0b; --red: #ef4444;
+  --text:   #e2e8f0; --text2: #7a8fa8; --text3: #445566;
+  --mono:   'IBM Plex Mono', monospace; --sans: 'IBM Plex Sans', sans-serif;
+  --r: 12px; --r-sm: 8px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+body { font-family: var(--sans); background: var(--bg); color: var(--text); min-height: 100vh; }
+
+/* ── LOGIN SCREEN ── */
+.login-screen {
+  min-height: 100vh; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; padding: 24px;
+}
+.login-card {
+  background: var(--surf); border: 1px solid var(--bord2);
+  border-radius: 20px; padding: 36px 32px; width: 100%; max-width: 380px;
+  text-align: center;
+}
+.login-logo {
+  width: 56px; height: 56px; border-radius: 14px; background: var(--accent);
+  display: flex; align-items: center; justify-content: center; margin: 0 auto 20px;
+}
+.login-logo svg { width: 28px; height: 28px; }
+.login-title { font-size: 20px; font-weight: 600; margin-bottom: 6px; }
+.login-sub   { font-size: 13px; color: var(--text2); margin-bottom: 28px; line-height: 1.5; }
+.btn-ms {
+  width: 100%; height: 46px; border-radius: 10px; border: none;
+  background: var(--accent); color: white; font-family: var(--sans);
+  font-size: 14px; font-weight: 600; cursor: pointer; display: flex;
+  align-items: center; justify-content: center; gap: 10px; transition: all 0.15s;
+}
+.btn-ms:hover { background: #1d4ed8; }
+.btn-ms:active { transform: scale(0.97); }
+.btn-ms svg { width: 18px; height: 18px; }
+.login-note { font-size: 11px; color: var(--text3); margin-top: 16px; line-height: 1.5; }
+
+/* ── CONFIG WARNING ── */
+.config-warn {
+  background: rgba(245,158,11,0.1); border: 1px solid rgba(245,158,11,0.3);
+  border-radius: var(--r-sm); padding: 12px 14px; margin-bottom: 20px;
+  font-size: 12px; color: var(--amber); text-align: left; line-height: 1.6;
+  display: none;
+}
+.config-warn.show { display: block; }
+
+/* ── HEADER ── */
+.header {
+  background: var(--surf); border-bottom: 1px solid var(--bord2);
+  padding: 0 20px; position: sticky; top: 0; z-index: 100;
+}
+.header-inner {
+  max-width: 960px; margin: 0 auto; display: flex; align-items: center; gap: 14px; height: 58px;
+}
+.logo { width: 34px; height: 34px; border-radius: 9px; background: var(--accent); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.logo svg { width: 18px; height: 18px; }
+.header-title { font-size: 15px; font-weight: 600; }
+.header-sub   { font-size: 11px; color: var(--text2); margin-top: 1px; font-family: var(--mono); }
+.user-pill {
+  margin-left: auto; display: flex; align-items: center; gap: 8px;
+  background: var(--surf2); border: 1px solid var(--bord); border-radius: 20px;
+  padding: 5px 12px 5px 8px;
+}
+.user-avatar {
+  width: 24px; height: 24px; border-radius: 50%; background: var(--accent);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 10px; font-weight: 600; color: white;
+}
+.user-name { font-size: 12px; color: var(--text2); }
+.btn-logout {
+  background: transparent; border: none; color: var(--text3); cursor: pointer;
+  font-size: 11px; font-family: var(--sans); padding: 2px 4px;
+}
+.btn-logout:hover { color: var(--red); }
+
+/* ── MAIN ── */
+.main { max-width: 960px; margin: 0 auto; padding: 20px; }
+
+/* ── STATS ── */
+.stats-row { display: grid; grid-template-columns: repeat(4,1fr); gap: 10px; margin-bottom: 18px; }
+.stat-card { background: var(--surf); border: 1px solid var(--bord); border-radius: var(--r); padding: 12px 14px; }
+.stat-num { font-size: 22px; font-weight: 600; font-family: var(--mono); line-height: 1; }
+.stat-lbl { font-size: 11px; color: var(--text2); margin-top: 4px; text-transform: uppercase; letter-spacing: 0.06em; }
+.c-green { color: var(--green); } .c-amber { color: var(--amber); }
+.c-red   { color: var(--red); }  .c-blue  { color: #60a5fa; }
+
+/* ── FILTERS ── */
+.filters { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 18px; align-items: center; }
+.filter-select, .search-input {
+  background: var(--surf); border: 1px solid var(--bord2);
+  border-radius: var(--r-sm); color: var(--text); font-family: var(--sans); font-size: 13px;
+  padding: 7px 28px 7px 10px; appearance: none; outline: none; cursor: pointer;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%237a8fa8'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 10px center;
+}
+.search-input { background-image: none; padding: 7px 12px; flex: 1; min-width: 160px; }
+.search-input::placeholder { color: var(--text3); }
+.filter-count { font-size: 12px; color: var(--text2); font-family: var(--mono); margin-left: auto; }
+
+/* ── VIEW TOGGLE ── */
+.view-toggle { display: flex; background: var(--surf2); border-radius: var(--r-sm); border: 1px solid var(--bord); }
+.vtab { padding: 5px 12px; font-size: 12px; font-weight: 500; cursor: pointer; border-radius: var(--r-sm); color: var(--text2); border: none; background: transparent; font-family: var(--sans); transition: all 0.15s; }
+.vtab.active { background: var(--accent); color: white; }
+
+/* ── CARDS ── */
+.eq-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px,1fr)); gap: 12px; }
+.eq-card { background: var(--surf); border: 1px solid var(--bord); border-radius: var(--r); overflow: hidden; transition: border-color 0.15s, transform 0.1s; cursor: pointer; }
+.eq-card:hover { border-color: var(--bord2); transform: translateY(-1px); }
+.eq-card-header { padding: 12px 14px 10px; border-bottom: 1px solid var(--bord); display: flex; align-items: flex-start; gap: 10px; }
+.eq-type-icon { width: 34px; height: 34px; border-radius: 9px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
+.eq-card-id   { font-family: var(--mono); font-size: 13px; font-weight: 500; }
+.eq-card-desc { font-size: 11px; color: var(--text2); margin-top: 2px; }
+.eq-status { margin-left: auto; padding: 3px 8px; border-radius: 5px; font-size: 10px; font-weight: 600; white-space: nowrap; text-transform: uppercase; letter-spacing: 0.04em; }
+.status-op   { background: rgba(16,185,129,0.12); color: var(--green); border: 1px solid rgba(16,185,129,0.25); }
+.status-baja { background: rgba(245,158,11,0.12); color: var(--amber); border: 1px solid rgba(245,158,11,0.25); }
+.status-inop { background: rgba(239,68,68,0.12);  color: var(--red);   border: 1px solid rgba(239,68,68,0.25); }
+.eq-card-body { padding: 10px 14px 12px; }
+.eq-info-row  { display: flex; justify-content: space-between; align-items: baseline; padding: 4px 0; }
+.eq-info-key  { font-size: 11px; color: var(--text3); }
+.eq-info-val  { font-size: 12px; font-family: var(--mono); color: var(--text2); text-align: right; }
+.eq-info-val.hl { color: var(--text); }
+.eq-mant-bar  { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--bord); display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.mant-indicator { display: flex; align-items: center; gap: 5px; font-size: 11px; }
+.dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+.dot-green { background: var(--green); } .dot-amber { background: var(--amber); }
+.dot-red   { background: var(--red); }   .dot-gray  { background: var(--text3); }
+.btn-reg { background: var(--accent); color: white; border: none; border-radius: var(--r-sm); padding: 6px 12px; font-size: 12px; font-weight: 500; cursor: pointer; font-family: var(--sans); transition: all 0.15s; white-space: nowrap; }
+.btn-reg:hover { background: #1d4ed8; }
+.btn-reg:active { transform: scale(0.96); }
+
+/* ── TABLE ── */
+.eq-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.eq-table th { padding: 9px 12px; text-align: left; font-size: 10px; text-transform: uppercase; letter-spacing: 0.07em; color: var(--text3); font-weight: 500; border-bottom: 1px solid var(--bord2); background: var(--surf2); position: sticky; top: 58px; }
+.eq-table td { padding: 10px 12px; border-bottom: 1px solid var(--bord); vertical-align: middle; }
+.eq-table tr:hover td { background: var(--surf2); }
+.eq-table tr { cursor: pointer; }
+.mono-sm { font-family: var(--mono); font-size: 12px; }
+
+/* ── MODAL ── */
+.overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(4px); z-index: 500; align-items: center; justify-content: center; padding: 16px; }
+.overlay.open { display: flex; }
+.modal { background: var(--surf); border: 1px solid var(--bord2); border-radius: 16px; width: 100%; max-width: 480px; max-height: 88vh; overflow-y: auto; animation: up 0.2s cubic-bezier(0.34,1.2,0.64,1); }
+@keyframes up { from { transform:translateY(20px); opacity:0; } to { transform:translateY(0); opacity:1; } }
+.modal-header { padding: 18px 20px 14px; border-bottom: 1px solid var(--bord); display: flex; align-items: flex-start; justify-content: space-between; }
+.modal-title { font-size: 16px; font-weight: 600; }
+.modal-sub   { font-size: 12px; color: var(--text2); margin-top: 3px; font-family: var(--mono); }
+.modal-close { width: 28px; height: 28px; border-radius: 7px; border: 1px solid var(--bord2); background: transparent; color: var(--text2); cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center; }
+.modal-body  { padding: 18px 20px; }
+.modal-footer { padding: 14px 20px; border-top: 1px solid var(--bord); display: flex; gap: 8px; justify-content: flex-end; }
+.info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 18px; }
+.info-block { background: var(--surf2); border-radius: var(--r-sm); padding: 10px 12px; }
+.info-block.full { grid-column: 1/-1; }
+.ib-key { font-size: 10px; text-transform: uppercase; letter-spacing: 0.07em; color: var(--text3); margin-bottom: 3px; }
+.ib-val { font-size: 13px; font-weight: 500; font-family: var(--mono); color: var(--text); }
+.sect-lbl { font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text3); margin: 16px 0 10px; display: flex; align-items: center; gap: 8px; }
+.sect-lbl::after { content:''; flex:1; height:1px; background:var(--bord2); }
+label.fld { display: block; font-size: 12px; color: var(--text2); margin-bottom: 5px; }
+input.fld { width: 100%; background: var(--surf2); border: 1px solid var(--bord2); border-radius: var(--r-sm); color: var(--text); font-family: var(--sans); font-size: 15px; padding: 11px 13px; outline: none; transition: border-color 0.15s; }
+input.fld:focus { border-color: var(--accent); }
+.fld-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+.btn-cancel { background: transparent; color: var(--text2); border: 1px solid var(--bord2); border-radius: var(--r-sm); padding: 8px 18px; font-size: 13px; cursor: pointer; font-family: var(--sans); }
+.btn-save   { background: var(--green); color: #0a1628; border: none; border-radius: var(--r-sm); padding: 9px 22px; font-size: 13px; font-weight: 600; cursor: pointer; font-family: var(--sans); transition: all 0.15s; min-width: 130px; display: flex; align-items: center; justify-content: center; gap: 6px; }
+.btn-save:hover { background: #059669; }
+.btn-save:disabled { background: var(--surf3); color: var(--text3); cursor: not-allowed; }
+
+/* Historial */
+.hist-item { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--bord); }
+.hist-item:last-child { border-bottom: none; }
+.hist-dot  { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); flex-shrink: 0; }
+.hist-date { font-family: var(--mono); font-size: 12px; color: var(--text2); min-width: 85px; }
+.hist-horo { font-family: var(--mono); font-size: 12px; color: var(--text); }
+.hist-user { font-size: 11px; color: var(--text3); margin-left: auto; }
+
+/* Loading / Sync */
+.sync-bar { display: none; position: fixed; top: 58px; left: 0; right: 0; z-index: 200; background: var(--accent); height: 3px; }
+.sync-bar.active { display: block; animation: syncAnim 1.2s ease-in-out infinite; }
+@keyframes syncAnim { 0%{transform:scaleX(0);transform-origin:left} 50%{transform:scaleX(1);transform-origin:left} 51%{transform:scaleX(1);transform-origin:right} 100%{transform:scaleX(0);transform-origin:right} }
+
+.toast { position: fixed; bottom: 24px; right: 24px; z-index: 9999; border-radius: 10px; padding: 12px 20px; font-size: 13px; font-weight: 600; display: none; align-items: center; gap: 8px; animation: fadeIn 0.2s; }
+.toast.show { display: flex; }
+.toast.ok  { background: var(--green); color: #0a1628; }
+.toast.err { background: var(--red);   color: white; }
+@keyframes fadeIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+
+/* Spinner en botón */
+.spinner-sm { width: 14px; height: 14px; border: 2px solid rgba(0,0,0,0.2); border-top-color: #0a1628; border-radius: 50%; animation: spin 0.7s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.empty-state { text-align: center; padding: 60px 20px; color: var(--text3); }
+.empty-state svg { width: 48px; height: 48px; margin-bottom: 16px; opacity: 0.3; }
+
+@media (max-width: 600px) {
+  .stats-row { grid-template-columns: 1fr 1fr; }
+  .eq-grid   { grid-template-columns: 1fr; }
+  .info-grid { grid-template-columns: 1fr; }
+  .fld-row   { grid-template-columns: 1fr; }
+  .main { padding: 14px; }
+  .user-name { display: none; }
+}
+</style>
+</head>
+<body>
+
+<div class="sync-bar" id="sync-bar"></div>
+<div class="toast" id="toast"><span id="toast-msg"></span></div>
+
+<!-- ═══════════════ LOGIN ═══════════════ -->
+<div id="login-screen" class="login-screen">
+  <div class="login-card">
+    <div class="login-logo">
+      <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round">
+        <rect x="2" y="12" width="6" height="8" rx="1"/>
+        <path d="M8 16h8l2-4H8"/><path d="M4 12V7a2 2 0 012-2h8l2 3"/>
+      </svg>
+    </div>
+    <div class="login-title">Flota TASA — Mantenimiento</div>
+    <div class="login-sub">Inicia sesión con tu cuenta corporativa Microsoft para registrar el mantenimiento de los equipos.</div>
+
+    <div class="config-warn" id="config-warn">
+      ⚠ La aplicación no está configurada aún.<br>
+      Pide a IT los datos CLIENT_ID y TENANT_ID<br>
+      y pégalos en la sección CONFIG al inicio del archivo HTML.
+    </div>
+
+    <button class="btn-ms" id="btn-login" onclick="signIn()">
+      <svg viewBox="0 0 21 21" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="1" y="1" width="9" height="9" fill="#f25022"/>
+        <rect x="11" y="1" width="9" height="9" fill="#7fba00"/>
+        <rect x="1" y="11" width="9" height="9" fill="#00a4ef"/>
+        <rect x="11" y="11" width="9" height="9" fill="#ffb900"/>
+      </svg>
+      Iniciar sesión con Microsoft
+    </button>
+    <div class="login-note">Tus datos se guardan directamente en el Excel de SharePoint compartido. Todos los supervisores ven la misma información en tiempo real.</div>
+  </div>
+</div>
+
+<!-- ═══════════════ APP ═══════════════ -->
+<div id="app-screen" style="display:none;">
+
+  <div class="header">
+    <div class="header-inner">
+      <div class="logo">
+        <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round">
+          <rect x="2" y="12" width="6" height="8" rx="1"/>
+          <path d="M8 16h8l2-4H8"/><path d="M4 12V7a2 2 0 012-2h8l2 3"/>
+        </svg>
+      </div>
+      <div>
+        <div class="header-title">Flota TASA — Registro de Mantenimiento</div>
+        <div class="header-sub" id="hdr-sub">33 equipos · 7 CDs</div>
+      </div>
+      <div style="margin-left:auto; display:flex; align-items:center; gap:10px;">
+        <div class="view-toggle">
+          <button class="vtab active" id="vt-cards" onclick="setView('cards')">Tarjetas</button>
+          <button class="vtab" id="vt-table" onclick="setView('table')">Tabla</button>
+        </div>
+        <div class="user-pill">
+          <div class="user-avatar" id="user-avatar">?</div>
+          <span class="user-name" id="user-name">Usuario</span>
+          <button class="btn-logout" onclick="signOut()" title="Cerrar sesión">✕</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="main">
+    <div class="stats-row">
+      <div class="stat-card"><div class="stat-num c-blue"  id="s-total">33</div><div class="stat-lbl">Total equipos</div></div>
+      <div class="stat-card"><div class="stat-num c-green" id="s-op">—</div><div class="stat-lbl">Operativos</div></div>
+      <div class="stat-card"><div class="stat-num c-amber" id="s-mant">—</div><div class="stat-lbl">Con mantenimiento</div></div>
+      <div class="stat-card"><div class="stat-num c-red"   id="s-sinmant">—</div><div class="stat-lbl">Sin registro</div></div>
+    </div>
+
+    <div class="filters">
+      <select class="filter-select" id="f-cd" onchange="applyFilters()">
+        <option value="">Todos los CDs</option>
+        <option>Callao</option><option>Chimbote</option><option>Malabrigo</option>
+        <option>Matarani</option><option>Pisco</option><option>Pucusana</option><option>Vegueta</option>
+      </select>
+      <select class="filter-select" id="f-tipo" onchange="applyFilters()">
+        <option value="">Todos los tipos</option>
+        <option>Montacargas</option><option>Apilador</option><option>Traspaleta</option>
+      </select>
+      <select class="filter-select" id="f-status" onchange="applyFilters()">
+        <option value="">Todos los estados</option>
+        <option>Operativo</option><option>Inoperativo</option><option>En proceso de baja</option>
+      </select>
+      <input class="search-input" id="f-search" placeholder="Buscar placa, código, marca..." oninput="applyFilters()">
+      <span class="filter-count" id="filter-count"></span>
+    </div>
+
+    <div id="view-cards"><div class="eq-grid" id="eq-grid"></div></div>
+    <div id="view-table" style="display:none; overflow-x:auto;">
+      <table class="eq-table">
+        <thead><tr>
+          <th>Código</th><th>Placa / ID</th><th>CD</th><th>Tipo</th>
+          <th>Marca · Modelo</th><th>Últ. Mantenimiento</th>
+          <th>Horómetro Mant.</th><th>Estado</th><th></th>
+        </tr></thead>
+        <tbody id="eq-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ MODAL ═══════════════ -->
+<div class="overlay" id="modal-overlay" onclick="closeBg(event)">
+  <div class="modal">
+    <div class="modal-header">
+      <div><div class="modal-title" id="m-title">—</div><div class="modal-sub" id="m-sub">—</div></div>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="info-grid" id="m-info"></div>
+      <div class="sect-lbl">Registrar mantenimiento</div>
+      <div class="fld-row">
+        <div><label class="fld">Fecha de mantenimiento *</label><input type="date" id="m-fecha" class="fld"></div>
+        <div><label class="fld">Horómetro al mantenimiento *</label><input type="number" id="m-horo" class="fld" placeholder="ej. 1250" inputmode="decimal" step="0.1"></div>
+      </div>
+      <div class="sect-lbl" id="hist-lbl" style="display:none;">Historial de este equipo</div>
+      <div id="m-hist"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeModal()">Cancelar</button>
+      <button class="btn-save" id="btn-save" onclick="guardar()">
+        <span id="save-label">Guardar en SharePoint</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- MSAL (Microsoft Authentication Library) -->
+<script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.10.0/lib/msal-browser.min.js"></script>
+
+<script>
+// ─── DATOS MAESTROS ─────────────────────────────────────────
+const EQUIPOS = [
+  {id:"ABAST 01",codigo:"ABAST 01",placa:"",sap:"3025448",area:"Abastecimiento",tipo:"Montacargas",cd:"Callao",status:"Operativo",marca:"TOYOTA",modelo:"2.5TM",cap:"2.0",comb:"Dual (GLP/Gasolina)",hMant:"",fMant:""},
+  {id:"FP08HA4224",codigo:"ABAST 02",placa:"FP08HA4224",sap:"3026896",area:"Abastecimiento",tipo:"Montacargas",cd:"Callao",status:"Operativo",marca:"TOYOTA",modelo:"3TM",cap:"3.0",comb:"Dual (GLP/Gasolina)",hMant:"",fMant:""},
+  {id:"FP08HA00173",codigo:"PPTT 02",placa:"FP08HA00173",sap:"3020291",area:"Productos Terminados",tipo:"Montacargas",cd:"Callao",status:"Operativo",marca:"CAT",modelo:"PD 9000",cap:"4.0",comb:"Petróleo Diesel",hMant:"14515",fMant:"2025-09-13"},
+  {id:"TASA-21271",codigo:"PPTT14",placa:"TASA-21271",sap:"9054604",area:"Productos Terminados",tipo:"Montacargas",cd:"Pisco",status:"Operativo",marca:"HYUNDAI",modelo:"50L-9",cap:"4.5",comb:"Gas GLP",hMant:"121",fMant:"2025-04-04"},
+  {id:"TASA-09694",codigo:"",placa:"TASA-09694",sap:"3050454",area:"Cámara Congelados",tipo:"Apilador",cd:"Callao",status:"Operativo",marca:"CROWN",modelo:"RM6025-45",cap:"2.0",comb:"Eléctrico",hMant:"",fMant:""},
+  {id:"TASA-09693",codigo:"",placa:"TASA-09693",sap:"3050451",area:"Cámara Congelados",tipo:"Apilador",cd:"Callao",status:"Operativo",marca:"CROWN",modelo:"RM6025-45",cap:"2.0",comb:"Eléctrico",hMant:"",fMant:""},
+  {id:"TASA-16035",codigo:"",placa:"TASA-16035",sap:"3053133",area:"Cámara Congelados",tipo:"Apilador",cd:"Callao",status:"Operativo",marca:"CROWN",modelo:"RR5725-45",cap:"2.0",comb:"Eléctrico",hMant:"",fMant:""},
+  {id:"TASA-16038",codigo:"",placa:"TASA-16038",sap:"3053140",area:"Cámara Congelados",tipo:"Apilador",cd:"Callao",status:"Operativo",marca:"CROWN",modelo:"RR5725-45",cap:"2.0",comb:"Eléctrico",hMant:"",fMant:""},
+  {id:"MPE-00585",codigo:"",placa:"MPE-00585",sap:"3050450",area:"Cámara Congelados",tipo:"Montacargas",cd:"Callao",status:"Operativo",marca:"LINDE",modelo:"E20PH",cap:"2.0",comb:"Eléctrico",hMant:"",fMant:""},
+  {id:"MPE-00587",codigo:"",placa:"MPE-00587",sap:"3050457",area:"Cámara Congelados",tipo:"Montacargas",cd:"Callao",status:"Operativo",marca:"LINDE",modelo:"E20PH",cap:"2.0",comb:"Eléctrico",hMant:"",fMant:""},
+  {id:"TASA-18851",codigo:"",placa:"TASA-18851",sap:"3051636",area:"Cámara Congelados",tipo:"Traspaleta",cd:"Callao",status:"Operativo",marca:"CROWN",modelo:"WT-3020",cap:"2.0",comb:"Eléctrico",hMant:"",fMant:""},
+  {id:"TASA-10070",codigo:"",placa:"TASA-10070",sap:"3051790",area:"Cámara Congelados",tipo:"Montacargas",cd:"Callao",status:"Operativo",marca:"CROWN",modelo:"SC-5245-40",cap:"2.0",comb:"Eléctrico",hMant:"",fMant:""},
+  {id:"TASA-10089",codigo:"",placa:"TASA-10089",sap:"3052252",area:"Cámara Congelados",tipo:"Traspaleta",cd:"Callao",status:"Operativo",marca:"CROWN",modelo:"WT-3020",cap:"2.0",comb:"Eléctrico",hMant:"",fMant:""},
+  {id:"TASA-16140",codigo:"",placa:"TASA-16140",sap:"3053190",area:"Cámara Congelados",tipo:"Montacargas",cd:"Callao",status:"Operativo",marca:"LINDE",modelo:"E20PH",cap:"2.0",comb:"Eléctrico",hMant:"",fMant:""},
+  {id:"TASA-22809",codigo:"",placa:"TASA-22809",sap:"3055024",area:"Cámara Congelados",tipo:"Montacargas",cd:"Callao",status:"Operativo",marca:"TOYOTA",modelo:"8FB-25",cap:"2.0",comb:"Eléctrico",hMant:"",fMant:""},
+  {id:"TASA-25454",codigo:"",placa:"TASA-25454",sap:"9056443",area:"Cámara Congelados",tipo:"Montacargas",cd:"Callao",status:"Operativo",marca:"TOYOTA",modelo:"8FB-25",cap:"2.0",comb:"Eléctrico",hMant:"",fMant:""},
+  {id:"MPE-00771",codigo:"",placa:"MPE-00771",sap:"3024817",area:"Productos Terminados",tipo:"Montacargas",cd:"Pucusana",status:"Operativo",marca:"TOYOTA",modelo:"8FBCU25",cap:"2.0",comb:"Eléctrico",hMant:"",fMant:""},
+  {id:"ABAST 03",codigo:"ABAST 03",placa:"",sap:"",area:"Abastecimiento",tipo:"Montacargas",cd:"Callao",status:"Operativo",marca:"",modelo:"2TM",cap:"",comb:"Eléctrico",hMant:"",fMant:""},
+  {id:"TASA-12340",codigo:"ABAST 04",placa:"TASA-12340",sap:"3019887",area:"Abastecimiento",tipo:"Montacargas",cd:"Callao",status:"Operativo",marca:"CAT",modelo:"12",cap:"2.5",comb:"Gas GLP",hMant:"",fMant:""},
+  {id:"ABAST 05",codigo:"ABAST 05",placa:"",sap:"3014181",area:"Abastecimiento",tipo:"Montacargas",cd:"Callao",status:"Operativo",marca:"TOYOTA",modelo:"2TM",cap:"2.0",comb:"Petróleo Diesel",hMant:"",fMant:""},
+  {id:"TASA-16105",codigo:"ABAST 06",placa:"TASA-16105",sap:"3054028",area:"Abastecimiento",tipo:"Montacargas",cd:"Chimbote",status:"Operativo",marca:"TOYOTA",modelo:"",cap:"3.0",comb:"Dual (GLP/Gasolina)",hMant:"1743.7",fMant:"2025-10-25"},
+  {id:"ABAST 07",codigo:"ABAST 07",placa:"",sap:"3018578",area:"Abastecimiento",tipo:"Apilador",cd:"Chimbote",status:"Operativo",marca:"UNION BULL",modelo:"CDD1545h",cap:"1.5",comb:"Eléctrico",hMant:"12577.9",fMant:"2025-08-30"},
+  {id:"TASA-16120",codigo:"ABAST 08",placa:"TASA-16120",sap:"3053556",area:"Abastecimiento",tipo:"Montacargas",cd:"Malabrigo",status:"Operativo",marca:"TOYOTA",modelo:"FSVE62",cap:"3.0",comb:"Gasolina",hMant:"752",fMant:"2025-12-05"},
+  {id:"ABAST 09",codigo:"ABAST 09",placa:"",sap:"3021261",area:"Abastecimiento",tipo:"Apilador",cd:"Malabrigo",status:"Operativo",marca:"UNION BULL",modelo:"CDD15M",cap:"1.5",comb:"Eléctrico",hMant:"5505.3",fMant:"2025-05-20"},
+  {id:"FP08HA0406",codigo:"PPTT 03",placa:"FP08HA0406",sap:"3021341",area:"Productos Terminados",tipo:"Montacargas",cd:"Callao",status:"En proceso de baja",marca:"Yale",modelo:"GLP090VXNGAE86",cap:"4.5",comb:"Gas GLP",hMant:"",fMant:""},
+  {id:"FP08HA0405",codigo:"PPTT 04",placa:"FP08HA0405",sap:"3021340",area:"Productos Terminados",tipo:"Montacargas",cd:"Callao",status:"Operativo",marca:"Yale",modelo:"GLP090VXNGAE86",cap:"4.5",comb:"Gas GLP",hMant:"11148",fMant:"2025-10-06"},
+  {id:"TASA-01546",codigo:"PPTT 07",placa:"TASA-01546",sap:"3020128",area:"Productos Terminados",tipo:"Montacargas",cd:"Callao",status:"En proceso de baja",marca:"CAT",modelo:"P 9000",cap:"4.0",comb:"Gas GLP",hMant:"",fMant:""},
+  {id:"FP13HA2348",codigo:"PPTT 10",placa:"FP13HA2348",sap:"3022167",area:"Productos Terminados",tipo:"Montacargas",cd:"Vegueta",status:"Operativo",marca:"CAT",modelo:"P 9000",cap:"4.0",comb:"Gas GLP",hMant:"7037.1",fMant:"2025-08-19"},
+  {id:"FS22HA0890",codigo:"PPTT 11",placa:"FS22HA0890",sap:"3019873",area:"Productos Terminados",tipo:"Montacargas",cd:"Chimbote",status:"Inoperativo",marca:"CAT",modelo:"P-9000",cap:"4.0",comb:"Gas GLP",hMant:"",fMant:""},
+  {id:"TASA-16119",codigo:"ABAST 10",placa:"TASA-16119",sap:"3053713",area:"Abastecimiento",tipo:"Montacargas",cd:"Vegueta",status:"Operativo",marca:"TOYOTA",modelo:"",cap:"3.0",comb:"Gasolina",hMant:"500",fMant:"2025-10-24"},
+  {id:"FS18HA0900",codigo:"PPTT 06",placa:"FS18HA0900",sap:"3018643",area:"Productos Terminados",tipo:"Montacargas",cd:"Matarani",status:"Inoperativo",marca:"CAT",modelo:"PD 9000",cap:"4.0",comb:"Petróleo Diesel",hMant:"10492.4",fMant:"2025-09-04"},
+  {id:"TASA-14944",codigo:"PPTT13",placa:"TASA-14944",sap:"9052954",area:"Productos Terminados",tipo:"Montacargas",cd:"Malabrigo",status:"Operativo",marca:"HYUNDAI",modelo:"50D-9SA",cap:"5.0",comb:"Petróleo Diesel",hMant:"1628",fMant:"2025-08-18"},
+];
+
+// Estado vivo (se actualiza desde SharePoint al cargar)
+const live = {};
+EQUIPOS.forEach(e => live[e.id] = { fecha: e.fMant, horometro: e.hMant });
+
+// ─── MSAL SETUP ─────────────────────────────────────────────
+let msalInstance = null;
+let currentAccount = null;
+let graphToken = null;
+let fileId = null; // ID del archivo Excel en SharePoint
+
+function initMSAL() {
+  const cfg = CONFIG;
+  if (cfg.CLIENT_ID === "PEGAR-CLIENT-ID-AQUI") {
+    document.getElementById('config-warn').classList.add('show');
+    document.getElementById('btn-login').disabled = true;
+    return false;
+  }
+  msalInstance = new msal.PublicClientApplication({
+    auth: {
+      clientId: cfg.CLIENT_ID,
+      authority: `https://login.microsoftonline.com/${cfg.TENANT_ID}`,
+      redirectUri: window.location.href.split('?')[0],
+    },
+    cache: { cacheLocation: "sessionStorage" }
+  });
+  return true;
+}
+
+async function signIn() {
+  if (!msalInstance) return;
+  try {
+    const resp = await msalInstance.loginPopup({
+      scopes: ["User.Read", "Files.ReadWrite", "Sites.ReadWrite.All"]
+    });
+    currentAccount = resp.account;
+    afterLogin();
+  } catch(e) {
+    showToast("Error al iniciar sesión: " + e.message, true);
+  }
+}
+
+function signOut() {
+  if (msalInstance && currentAccount) {
+    msalInstance.logoutPopup({ account: currentAccount });
+  }
+  document.getElementById('app-screen').style.display   = 'none';
+  document.getElementById('login-screen').style.display = 'flex';
+}
+
+async function getToken() {
+  try {
+    const r = await msalInstance.acquireTokenSilent({
+      scopes: ["Files.ReadWrite", "Sites.ReadWrite.All"],
+      account: currentAccount
+    });
+    return r.accessToken;
+  } catch {
+    const r = await msalInstance.acquireTokenPopup({
+      scopes: ["Files.ReadWrite", "Sites.ReadWrite.All"]
+    });
+    return r.accessToken;
+  }
+}
+
+async function afterLogin() {
+  const name = currentAccount.name || currentAccount.username;
+  const initials = name.split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase();
+  document.getElementById('user-avatar').textContent = initials;
+  document.getElementById('user-name').textContent   = name.split(' ')[0];
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('app-screen').style.display   = 'block';
+  await cargarDesdeSP();
+  renderStats();
+  applyFilters();
+}
+
+// ─── GRAPH API — LEER DATOS DE SHAREPOINT ────────────────────
+async function cargarDesdeSP() {
+  syncBar(true);
+  try {
+    graphToken = await getToken();
+    const siteUrl = `${CONFIG.SHAREPOINT_URL}${CONFIG.SITE_PATH}`;
+
+    // Buscar el archivo en SharePoint
+    const siteResp = await fetch(
+      `https://graph.microsoft.com/v1.0/sites/${CONFIG.SHAREPOINT_URL.replace('https://','').split('/')[0]}:${CONFIG.SITE_PATH}`,
+      { headers: { Authorization: `Bearer ${graphToken}` } }
+    );
+    const siteData = await siteResp.json();
+    const siteId = siteData.id;
+
+    // Buscar el archivo Excel
+    const filesResp = await fetch(
+      `https://graph.microsoft.com/v1.0/sites/${siteId}/drive/root:${CONFIG.EXCEL_PATH}${CONFIG.EXCEL_FILENAME}`,
+      { headers: { Authorization: `Bearer ${graphToken}` } }
+    );
+    const fileData = await filesResp.json();
+    fileId = fileData.id;
+    const driveId = fileData.parentReference?.driveId;
+
+    // Leer hoja REGISTRO_MANTENIMIENTO
+    const rowsResp = await fetch(
+      `https://graph.microsoft.com/v1.0/drives/${driveId}/items/${fileId}/workbook/worksheets('${CONFIG.SHEET_REGISTRO}')/usedRange`,
+      { headers: { Authorization: `Bearer ${graphToken}` } }
+    );
+    const rowsData = await rowsResp.json();
+    const rows = rowsData.values || [];
+
+    // Actualizar live state con el último registro por equipo
+    if (rows.length > 2) {
+      const dataRows = rows.slice(2); // saltar cabeceras
+      dataRows.forEach(row => {
+        const equipo = row[2]; // columna C: equipo
+        const fecha  = row[4]; // columna E: fecha mantenimiento
+        const horo   = row[5]; // columna F: horómetro
+        if (equipo && live[equipo] !== undefined) {
+          if (fecha) live[equipo] = { fecha: fecha.toString().substring(0,10), horometro: horo };
+        }
+      });
+    }
+  } catch(e) {
+    console.warn("No se pudo conectar a SharePoint:", e.message);
+    // Funciona con datos locales si falla la conexión
+  }
+  syncBar(false);
+}
+
+// ─── GRAPH API — ESCRIBIR REGISTRO EN SHAREPOINT ─────────────
+async function escribirEnSP(equipo, fecha, horometro, usuario) {
+  try {
+    graphToken = await getToken();
+
+    // Obtener driveId e itemId del archivo
+    const infoResp = await fetch(
+      `https://graph.microsoft.com/v1.0/sites/${CONFIG.SHAREPOINT_URL.replace('https://','').split('/')[0]}:${CONFIG.SITE_PATH}/drive/root:${CONFIG.EXCEL_PATH}${CONFIG.EXCEL_FILENAME}`,
+      { headers: { Authorization: `Bearer ${graphToken}` } }
+    );
+    const info = await infoResp.json();
+    const driveId = info.parentReference?.driveId;
+    const itemId  = info.id || fileId;
+
+    // Obtener el rango usado para saber en qué fila agregar
+    const rangeResp = await fetch(
+      `https://graph.microsoft.com/v1.0/drives/${driveId}/items/${itemId}/workbook/worksheets('${CONFIG.SHEET_REGISTRO}')/usedRange`,
+      { headers: { Authorization: `Bearer ${graphToken}` } }
+    );
+    const rangeData = await rangeResp.json();
+    const nextRow = (rangeData.values?.length || 2) + 1;
+
+    // ID autoincremental
+    const regId = `REG-${String(nextRow - 2).padStart(4,'0')}`;
+    const now   = new Date().toISOString().slice(0,16).replace('T',' ');
+    const eq    = EQUIPOS.find(e => e.id === equipo);
+    const cd    = eq?.cd || '';
+
+    // Escribir nueva fila
+    const newRow = [[regId, fecha, equipo, cd, fecha, horometro, usuario, now, '']];
+    await fetch(
+      `https://graph.microsoft.com/v1.0/drives/${driveId}/items/${itemId}/workbook/worksheets('${CONFIG.SHEET_REGISTRO}')/range(address='A${nextRow}:I${nextRow}')`,
+      {
+        method: 'PATCH',
+        headers: { Authorization: `Bearer ${graphToken}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ values: newRow })
+      }
+    );
+
+    // Actualizar también hoja BD_MONTACARGAS col O (horómetro) y P (fecha)
+    // Buscar la fila del equipo en BD_MONTACARGAS
+    const bdResp = await fetch(
+      `https://graph.microsoft.com/v1.0/drives/${driveId}/items/${itemId}/workbook/worksheets('${CONFIG.SHEET_BD}')/usedRange`,
+      { headers: { Authorization: `Bearer ${graphToken}` } }
+    );
+    const bdData = await bdResp.json();
+    const bdRows = bdData.values || [];
+    let eqRow = -1;
+    bdRows.forEach((row, i) => {
+      if (i < 2) return;
+      const rowId = (row[0]||'').toString().trim();
+      const rowPlaca = (row[1]||'').toString().trim();
+      if (rowId === equipo || rowPlaca === equipo) eqRow = i + 1; // 1-indexed
+    });
+
+    if (eqRow > 0) {
+      await fetch(
+        `https://graph.microsoft.com/v1.0/drives/${driveId}/items/${itemId}/workbook/worksheets('${CONFIG.SHEET_BD}')/range(address='M${eqRow}:N${eqRow}')`,
+        {
+          method: 'PATCH',
+          headers: { Authorization: `Bearer ${graphToken}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ values: [[horometro, fecha]] })
+        }
+      );
+    }
+    return true;
+  } catch(e) {
+    console.error("Error escribiendo en SharePoint:", e);
+    return false;
+  }
+}
+
+// ─── UI HELPERS ──────────────────────────────────────────────
+const typeIcon = {
+  Montacargas: { bg:'rgba(37,99,235,0.15)', color:'#60a5fa', svg:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2" y="12" width="6" height="8" rx="1"/><path d="M8 16h8l2-4H8"/><path d="M4 12V7a2 2 0 012-2h8l2 3"/></svg>' },
+  Apilador:   { bg:'rgba(16,185,129,0.12)', color:'#34d399', svg:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="2" x2="12" y2="22"/><path d="M8 6l4-4 4 4"/><rect x="6" y="16" width="12" height="4" rx="1"/></svg>' },
+  Traspaleta: { bg:'rgba(245,158,11,0.12)', color:'#fbbf24', svg:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M2 12h16l2-4H2v4z"/><circle cx="6" cy="18" r="2"/><circle cx="18" cy="18" r="2"/><path d="M4 12V4"/></svg>' },
+};
+const stCls = s => s==='Operativo'?'status-op':s==='Inoperativo'?'status-inop':'status-baja';
+const stLbl = s => s==='Operativo'?'Operativo':s==='Inoperativo'?'Inoperativo':'En baja';
+const fmtD  = d => { if(!d) return '—'; try{ const p=d.split('-'); return `${p[2]}/${p[1]}/${p[0]}`; } catch{ return d; } };
+function semaforo(id) {
+  const l = live[id];
+  if (!l?.fecha) return { cls:'dot-gray', txt:'Sin registro' };
+  const diff = Math.floor((new Date() - new Date(l.fecha+'T12:00:00')) / 86400000);
+  if (diff > 180) return { cls:'dot-red',   txt:`Hace ${Math.floor(diff/30)} meses` };
+  if (diff > 90)  return { cls:'dot-amber',  txt:`Hace ${diff} días` };
+  return { cls:'dot-green', txt: fmtD(l.fecha) };
+}
+
+// ─── STATS ───────────────────────────────────────────────────
+function renderStats() {
+  document.getElementById('s-total').textContent  = EQUIPOS.length;
+  document.getElementById('s-op').textContent     = EQUIPOS.filter(e=>e.status==='Operativo').length;
+  document.getElementById('s-mant').textContent   = EQUIPOS.filter(e=>live[e.id]?.fecha).length;
+  document.getElementById('s-sinmant').textContent= EQUIPOS.filter(e=>!live[e.id]?.fecha).length;
+  document.getElementById('hdr-sub').textContent  =
+    `${EQUIPOS.length} equipos · 7 CDs · ${new Date().toLocaleDateString('es-PE',{day:'2-digit',month:'short',year:'numeric'})}`;
+}
+
+// ─── FILTROS + RENDER ─────────────────────────────────────────
+let filtered = [...EQUIPOS];
+let currentView = 'cards';
+
+function applyFilters() {
+  const cd=document.getElementById('f-cd').value, tipo=document.getElementById('f-tipo').value,
+        st=document.getElementById('f-status').value, q=document.getElementById('f-search').value.toLowerCase();
+  filtered = EQUIPOS.filter(e => {
+    if(cd && e.cd!==cd) return false;
+    if(tipo && e.tipo!==tipo) return false;
+    if(st && e.status!==st) return false;
+    if(q && ![e.id,e.placa,e.codigo,e.marca,e.modelo,e.sap].join(' ').toLowerCase().includes(q)) return false;
+    return true;
+  });
+  document.getElementById('filter-count').textContent = `${filtered.length} de ${EQUIPOS.length} equipos`;
+  if(currentView==='cards') renderCards(); else renderTable();
+}
+
+function setView(v) {
+  currentView=v;
+  document.getElementById('view-cards').style.display = v==='cards'?'':'none';
+  document.getElementById('view-table').style.display = v==='table'?'':'none';
+  document.getElementById('vt-cards').classList.toggle('active',v==='cards');
+  document.getElementById('vt-table').classList.toggle('active',v==='table');
+  applyFilters();
+}
+
+function renderCards() {
+  const g=document.getElementById('eq-grid'); g.innerHTML='';
+  filtered.forEach(e => {
+    const ic=typeIcon[e.tipo]||typeIcon.Montacargas, sm=semaforo(e.id), l=live[e.id];
+    const label=e.placa||e.codigo||e.id, sub=[e.marca,e.modelo].filter(Boolean).join(' · ')||'—';
+    const d=document.createElement('div'); d.className='eq-card';
+    d.innerHTML=`
+      <div class="eq-card-header">
+        <div class="eq-type-icon" style="background:${ic.bg};color:${ic.color};">${ic.svg}</div>
+        <div style="flex:1;min-width:0;"><div class="eq-card-id">${label}</div><div class="eq-card-desc">${e.cd} · ${e.tipo}</div></div>
+        <div class="eq-status ${stCls(e.status)}">${stLbl(e.status)}</div>
+      </div>
+      <div class="eq-card-body">
+        <div class="eq-info-row"><span class="eq-info-key">Marca / Modelo</span><span class="eq-info-val hl">${sub}</span></div>
+        <div class="eq-info-row"><span class="eq-info-key">SAP</span><span class="eq-info-val">${e.sap||'—'}</span></div>
+        <div class="eq-info-row"><span class="eq-info-key">Capacidad</span><span class="eq-info-val">${e.cap?e.cap+' TM':'—'}</span></div>
+        <div class="eq-info-row"><span class="eq-info-key">Horómetro mant.</span><span class="eq-info-val hl">${l?.horometro||'—'}</span></div>
+        <div class="eq-mant-bar">
+          <div class="mant-indicator"><span class="dot ${sm.cls}"></span><span style="color:var(--text2);font-size:11px;">${sm.txt}</span></div>
+          <button class="btn-reg" onclick="event.stopPropagation();openModal('${e.id}')">+ Registrar</button>
+        </div>
+      </div>`;
+    d.onclick=()=>openModal(e.id);
+    g.appendChild(d);
+  });
+}
+
+function renderTable() {
+  const tb=document.getElementById('eq-tbody'); tb.innerHTML='';
+  filtered.forEach(e => {
+    const l=live[e.id], label=e.placa||e.codigo||e.id, sm=semaforo(e.id);
+    const tr=document.createElement('tr'); tr.onclick=()=>openModal(e.id);
+    tr.innerHTML=`
+      <td class="mono-sm" style="color:var(--text2);">${e.codigo||'—'}</td>
+      <td class="mono-sm">${label}</td>
+      <td style="font-size:12px;">${e.cd}</td>
+      <td style="font-size:12px;">${e.tipo}</td>
+      <td style="font-size:12px;">${[e.marca,e.modelo].filter(Boolean).join(' ')||'—'}</td>
+      <td><span class="dot ${sm.cls}" style="display:inline-block;margin-right:6px;"></span><span class="mono-sm">${fmtD(l?.fecha)||'—'}</span></td>
+      <td class="mono-sm">${l?.horometro?l.horometro+' h':'—'}</td>
+      <td><span class="eq-status ${stCls(e.status)}">${stLbl(e.status)}</span></td>
+      <td><button class="btn-reg" onclick="event.stopPropagation();openModal('${e.id}')">+ Reg.</button></td>`;
+    tb.appendChild(tr);
+  });
+}
+
+// ─── MODAL ────────────────────────────────────────────────────
+let activeId = null;
+
+function openModal(id) {
+  activeId = id;
+  const e=EQUIPOS.find(x=>x.id===id), l=live[id];
+  const label=e.placa||e.codigo||e.id;
+  document.getElementById('m-title').textContent=[e.tipo,e.marca,e.modelo].filter(Boolean).join(' · ');
+  document.getElementById('m-sub').textContent=`${label} · ${e.cd}`;
+
+  const fields=[['Código PPTT',e.codigo],['Placa',e.placa],['SAP',e.sap],['CD',e.cd],
+    ['Área',e.area],['Marca',e.marca],['Modelo',e.modelo],['Capacidad',e.cap?e.cap+' TM':''],
+    ['Combustible',e.comb],['Últ. mantenimiento',fmtD(l?.fecha)],['Horómetro mant.',l?.horometro?l.horometro+' hrs':'']
+  ].filter(([,v])=>v);
+  document.getElementById('m-info').innerHTML=fields.map(([k,v])=>
+    `<div class="info-block"><div class="ib-key">${k}</div><div class="ib-val">${v||'—'}</div></div>`).join('');
+
+  document.getElementById('m-fecha').value=new Date().toISOString().split('T')[0];
+  document.getElementById('m-horo').value='';
+  document.getElementById('save-label').textContent='Guardar en SharePoint';
+  document.getElementById('btn-save').disabled=false;
+
+  // Historial local
+  try {
+    const hist=JSON.parse(localStorage.getItem('h_'+id)||'[]');
+    const hl=document.getElementById('hist-lbl'), hc=document.getElementById('m-hist');
+    if(hist.length>0){
+      hl.style.display='';
+      hc.innerHTML=[...hist].reverse().slice(0,6).map(h=>
+        `<div class="hist-item"><span class="hist-dot"></span><span class="hist-date">${fmtD(h.fecha)}</span><span class="hist-horo">${h.horo?h.horo+' hrs':'—'}</span><span class="hist-user">${h.user||''}</span></div>`
+      ).join('');
+    } else { hl.style.display='none'; hc.innerHTML=''; }
+  } catch{}
+
+  document.getElementById('modal-overlay').classList.add('open');
+  document.body.style.overflow='hidden';
+}
+
+function closeModal(){ document.getElementById('modal-overlay').classList.remove('open'); document.body.style.overflow=''; activeId=null; }
+function closeBg(e){ if(e.target===document.getElementById('modal-overlay')) closeModal(); }
+
+async function guardar() {
+  const fecha=document.getElementById('m-fecha').value;
+  const horo =document.getElementById('m-horo').value;
+  if(!fecha){document.getElementById('m-fecha').style.borderColor='var(--red)';return;}
+  if(!horo) {document.getElementById('m-horo').style.borderColor='var(--red)';return;}
+
+  const btn=document.getElementById('btn-save');
+  btn.disabled=true;
+  btn.innerHTML='<div class="spinner-sm"></div> Guardando...';
+  syncBar(true);
+
+  const usuario = currentAccount?.name || currentAccount?.username || 'Supervisor';
+  const ok = await escribirEnSP(activeId, fecha, parseFloat(horo), usuario);
+
+  // Guardar siempre en local también como respaldo
+  live[activeId] = { fecha, horometro: horo };
+  try {
+    const hist=JSON.parse(localStorage.getItem('h_'+activeId)||'[]');
+    hist.push({ fecha, horo:parseFloat(horo), user:usuario, ts:new Date().toISOString() });
+    localStorage.setItem('h_'+activeId, JSON.stringify(hist));
+  } catch{}
+
+  syncBar(false);
+  closeModal();
+  renderStats();
+  applyFilters();
+  showToast(ok ? `✓ Guardado en SharePoint — ${label(activeId)}` : `✓ Guardado localmente (sin conexión)`, !ok);
+}
+
+function label(id){ const e=EQUIPOS.find(x=>x.id===id); return e?.placa||e?.codigo||id; }
+
+// ─── UTILS ────────────────────────────────────────────────────
+function syncBar(on){ document.getElementById('sync-bar').classList.toggle('active',on); }
+function showToast(msg, err=false){
+  const t=document.getElementById('toast');
+  document.getElementById('toast-msg').textContent=msg;
+  t.className='toast show '+(err?'err':'ok');
+  setTimeout(()=>t.classList.remove('show'),3500);
+}
+
+// ─── INIT ──────────────────────────────────────────────────
+window.addEventListener('DOMContentLoaded', () => {
+  const ok = initMSAL();
+  if (ok) {
+    // Verificar si ya hay sesión activa
+    const accounts = msalInstance?.getAllAccounts?.() || [];
+    if (accounts.length > 0) {
+      currentAccount = accounts[0];
+      afterLogin();
+    }
+  }
+  // Precarga filtros
+  document.getElementById('filter-count').textContent = `${EQUIPOS.length} de ${EQUIPOS.length} equipos`;
+});
+</script>
+</body>
+</html>
