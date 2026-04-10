@@ -32,7 +32,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:1
 .db-dot{width:7px;height:7px;border-radius:50%;background:var(--text3);}
 .db-dot.ok{background:var(--green);}.db-dot.err{background:var(--red);}
 .main{max-width:980px;margin:0 auto;padding:20px;}
-.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:18px;}
+.stats-row{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-bottom:18px;}
 .stat-card{background:var(--surf);border:1px solid var(--bord);border-radius:var(--r);padding:12px 14px;}
 .stat-num{font-size:22px;font-weight:600;font-family:var(--mono);line-height:1;}
 .stat-lbl{font-size:11px;color:var(--text2);margin-top:4px;text-transform:uppercase;letter-spacing:0.06em;}
@@ -110,7 +110,7 @@ input.fld:focus{border-color:var(--accent);}
 .hist-table tr:hover td{background:var(--surf2);}
 .toast{position:fixed;bottom:24px;right:24px;z-index:9999;border-radius:10px;padding:12px 20px;font-size:13px;font-weight:600;display:none;align-items:center;gap:8px;}
 .toast.show{display:flex;}.toast.ok{background:var(--green);color:#0a1628;}.toast.err{background:var(--red);color:white;}
-@media(max-width:600px){.stats-row{grid-template-columns:1fr 1fr;}.eq-grid{grid-template-columns:1fr;}.info-grid,.fld-row{grid-template-columns:1fr;}.main{padding:14px;}.sup-hint{display:none;}}
+@media(max-width:600px){.stats-row{grid-template-columns:1fr 1fr 1fr;}.eq-grid{grid-template-columns:1fr;}.info-grid,.fld-row{grid-template-columns:1fr;}.main{padding:14px;}.sup-hint{display:none;}}
 </style>
 </head>
 <body>
@@ -135,8 +135,10 @@ input.fld:focus{border-color:var(--accent);}
   <div class="stats-row">
     <div class="stat-card"><div class="stat-num c-blue" id="s-total">—</div><div class="stat-lbl">Total equipos</div></div>
     <div class="stat-card"><div class="stat-num c-green" id="s-op">—</div><div class="stat-lbl">Operativos</div></div>
+    <div class="stat-card"><div class="stat-num c-red" id="s-inop">—</div><div class="stat-lbl">Inoperativos</div></div>
+    <div class="stat-card"><div class="stat-num c-amber" id="s-baja">—</div><div class="stat-lbl">En proceso de baja</div></div>
     <div class="stat-card"><div class="stat-num c-green" id="s-mant">—</div><div class="stat-lbl">Con mantenimiento</div></div>
-    <div class="stat-card"><div class="stat-num c-red" id="s-sin">—</div><div class="stat-lbl">Sin registro</div></div>
+    <div class="stat-card"><div class="stat-num" id="s-pct" style="color:var(--accent)">—</div><div class="stat-lbl">% Operativos</div></div>
   </div>
   <div class="toolbar">
     <select class="filter-select" id="f-cd" onchange="applyFilters()"><option value="">Todos los CDs</option><option>Callao</option><option>Chimbote</option><option>Malabrigo</option><option>Matarani</option><option>Pisco</option><option>Pucusana</option><option>Vegueta</option></select>
@@ -145,12 +147,12 @@ input.fld:focus{border-color:var(--accent);}
     <input class="search-input" id="f-search" placeholder="Buscar placa, código, marca..." oninput="applyFilters()">
     <span class="filter-count" id="filter-count"></span>
     <button class="btn-action btn-surf" onclick="toggleHist()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Historial</button>
-    <button class="btn-action btn-green" onclick="exportCSV()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Exportar Excel</button>
+    
   </div>
   <div class="hist-panel" id="hist-panel">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
       <div style="font-size:13px;font-weight:600;">Todos los registros — Supabase</div>
-      <button onclick="exportCSV()" class="btn-action btn-green" style="font-size:11px;padding:5px 10px;">Exportar Excel</button>
+      
     </div>
     <div style="font-size:11px;color:var(--text3);margin-bottom:10px;">Datos en tiempo real. Power BI se conecta directo a Supabase via PostgreSQL.</div>
     <div style="overflow-x:auto;"><table class="hist-table"><thead><tr><th>Fecha</th><th>Equipo</th><th>CD</th><th>Tipo</th><th>Fecha Mant.</th><th>Horómetro</th><th>Supervisor</th></tr></thead><tbody id="hist-body"></tbody></table></div>
@@ -158,7 +160,7 @@ input.fld:focus{border-color:var(--accent);}
   </div>
   <div id="view-cards"><div class="eq-grid" id="eq-grid"></div></div>
   <div id="view-table" style="display:none;overflow-x:auto;">
-    <table class="eq-table"><thead><tr><th>Código</th><th>Placa / ID</th><th>CD</th><th>Tipo</th><th>Marca · Modelo</th><th>Últ. Mantenimiento</th><th>Horómetro</th><th>Estado</th><th></th></tr></thead><tbody id="eq-tbody"></tbody></table>
+    <table class="eq-table"><thead><tr><th>Código PPTT</th><th>Placa</th><th>CD</th><th>Tipo</th><th>Marca · Modelo</th><th>Últ. Mantenimiento</th><th>Horómetro</th><th>Estado</th><th></th></tr></thead><tbody id="eq-tbody"></tbody></table>
   </div>
 </div>
 <div class="overlay" id="overlay" onclick="closeBg(event)">
@@ -217,10 +219,17 @@ async function cargarDatos(){
   sync(false);
 }
 function renderStats(){
-  document.getElementById('s-total').textContent=EQ.length;
-  document.getElementById('s-op').textContent=EQ.filter(e=>e.status==='Operativo').length;
+  const total=EQ.length;
+  const nOp=EQ.filter(e=>e.status==='Operativo').length;
+  const nInop=EQ.filter(e=>e.status==='Inoperativo').length;
+  const nBaja=EQ.filter(e=>e.status==='En proceso de baja').length;
+  const pct=total>0?Math.round(nOp/total*100):0;
+  document.getElementById('s-total').textContent=total;
+  document.getElementById('s-op').textContent=nOp;
+  document.getElementById('s-inop').textContent=nInop;
+  document.getElementById('s-baja').textContent=nBaja;
   document.getElementById('s-mant').textContent=EQ.filter(e=>live[e.id]?.fecha).length;
-  document.getElementById('s-sin').textContent=EQ.filter(e=>!live[e.id]?.fecha).length;
+  document.getElementById('s-pct').textContent=pct+'%';
   document.getElementById('hdr-sub').textContent=`${EQ.length} equipos · 7 CDs · ${new Date().toLocaleDateString('es-PE',{day:'2-digit',month:'short',year:'numeric'})}`;
   document.getElementById('filter-count').textContent=`${EQ.length} de ${EQ.length} equipos`;
 }
@@ -235,7 +244,7 @@ function renderCards(){
   const g=document.getElementById('eq-grid');g.innerHTML='';
   filtered.forEach(e=>{
     const ic=icons[e.tipo]||icons.Montacargas,sm=sem(e.id),l=live[e.id];
-    const label=e.placa||e.codigo||e.id,sub=[e.marca,e.modelo].filter(Boolean).join(' · ')||'—';
+    const label=e.codigo||e.placa||e.id,sub=[e.marca,e.modelo].filter(Boolean).join(' · ')||'—';
     const d=document.createElement('div');d.className='eq-card';
     d.innerHTML=`<div class="eq-card-header"><div class="eq-type-icon" style="background:${ic.bg};color:${ic.color};">${ic.svg}</div><div style="flex:1;min-width:0;"><div class="eq-card-id">${label}</div><div class="eq-card-desc">${e.cd} · ${e.tipo}</div></div><div class="eq-status ${stC(e.status)}">${stL(e.status)}</div></div><div class="eq-card-body"><div class="eq-info-row"><span class="eq-info-key">Marca / Modelo</span><span class="eq-info-val hl">${sub}</span></div><div class="eq-info-row"><span class="eq-info-key">SAP</span><span class="eq-info-val">${e.sap||'—'}</span></div><div class="eq-info-row"><span class="eq-info-key">Capacidad</span><span class="eq-info-val">${e.capacidad?e.capacidad+' TM':'—'}</span></div><div class="eq-info-row"><span class="eq-info-key">Horómetro mant.</span><span class="eq-info-val hl">${l?.horo||'—'}</span></div><div class="eq-mant-bar"><div class="mant-ind"><span class="dot ${sm.cls}"></span><span style="color:var(--text2)">${sm.txt}</span></div><button class="btn-reg" onclick="event.stopPropagation();openModal('${e.id.replace(/'/g,"\\'")}')">+ Registrar</button></div></div>`;
     d.onclick=()=>openModal(e.id);g.appendChild(d);
@@ -244,16 +253,16 @@ function renderCards(){
 function renderTable(){
   const tb=document.getElementById('eq-tbody');tb.innerHTML='';
   filtered.forEach(e=>{
-    const l=live[e.id],label=e.placa||e.codigo||e.id,sm=sem(e.id);
+    const l=live[e.id],label=e.codigo||e.placa||e.id,sm=sem(e.id);
     const tr=document.createElement('tr');tr.onclick=()=>openModal(e.id);
-    tr.innerHTML=`<td class="mono-sm" style="color:var(--text2)">${e.codigo||'—'}</td><td class="mono-sm">${label}</td><td style="font-size:12px">${e.cd}</td><td style="font-size:12px">${e.tipo}</td><td style="font-size:12px">${[e.marca,e.modelo].filter(Boolean).join(' ')||'—'}</td><td><span class="dot ${sm.cls}" style="display:inline-block;margin-right:6px"></span><span class="mono-sm">${fD(l?.fecha)}</span></td><td class="mono-sm">${l?.horo?l.horo+' h':'—'}</td><td><span class="eq-status ${stC(e.status)}">${stL(e.status)}</span></td><td><button class="btn-reg" onclick="event.stopPropagation();openModal('${e.id.replace(/'/g,"\\'")}')">+ Reg.</button></td>`;
+    tr.innerHTML=`<td class="mono-sm" style="color:var(--accent)">${label}</td><td class="mono-sm" style="color:var(--text2)">${e.placa||'—'}</td><td style="font-size:12px">${e.cd}</td><td style="font-size:12px">${e.tipo}</td><td style="font-size:12px">${[e.marca,e.modelo].filter(Boolean).join(' ')||'—'}</td><td><span class="dot ${sm.cls}" style="display:inline-block;margin-right:6px"></span><span class="mono-sm">${fD(l?.fecha)}</span></td><td class="mono-sm">${l?.horo?l.horo+' h':'—'}</td><td><span class="eq-status ${stC(e.status)}">${stL(e.status)}</span></td><td><button class="btn-reg" onclick="event.stopPropagation();openModal('${e.id.replace(/'/g,"\\'")}')">+ Reg.</button></td>`;
     tb.appendChild(tr);
   });
 }
 async function openModal(id){
   activeId=id;
   const e=EQ.find(x=>x.id===id),l=live[id];
-  const label=e.placa||e.codigo||e.id;
+  const label=e.codigo||e.placa||e.id;
   document.getElementById('m-title').textContent=[e.tipo,e.marca,e.modelo].filter(Boolean).join(' · ');
   document.getElementById('m-sub').textContent=`${label} · ${e.cd}`;
   const fields=[['Código PPTT',e.codigo],['Placa',e.placa],['SAP',e.sap],['CD',e.cd],['Área',e.area],['Marca',e.marca],['Modelo',e.modelo],['Capacidad',e.capacidad?e.capacidad+' TM':''],['Combustible',e.combustible],['Últ. mantenimiento',fD(l?.fecha)],['Horómetro mant.',l?.horo?l.horo+' hrs':'']].filter(([,v])=>v);
@@ -278,7 +287,7 @@ async function guardar(){
   const btn=document.getElementById('btn-save');
   btn.disabled=true;btn.innerHTML='<div class="spinner-sm"></div> Guardando...';sync(true);
   const e=EQ.find(x=>x.id===activeId);
-  const{error}=await sb.from('mantenimientos').insert({equipo_id:activeId,placa:e.placa||e.codigo||e.id,cd:e.cd,tipo:e.tipo,marca:e.marca,modelo:e.modelo,fecha_mantenimiento:fecha,horometro:parseFloat(horo),supervisor:sup});
+  const{error}=await sb.from('mantenimientos').insert({equipo_id:activeId,placa:e.codigo||e.placa||e.id,cd:e.cd,tipo:e.tipo,marca:e.marca,modelo:e.modelo,fecha_mantenimiento:fecha,horometro:parseFloat(horo),supervisor:sup});
   sync(false);
   if(error){btn.disabled=false;btn.innerHTML='✓ Guardar en Supabase';showToast('Error: '+error.message,true);return;}
   live[activeId]={fecha,horo:parseFloat(horo),_set:true};
