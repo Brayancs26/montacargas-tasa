@@ -354,15 +354,13 @@ async function guardar(){
   const e=EQ.find(x=>x.id===activeId);
   const estadoFinal=nuevoEstado||e.status;
 
-  // MODO SOLO ESTADO — no necesita fecha ni horómetro
+  // MODO SOLO ESTADO
   if(modoTab==='estado'){
     if(!nuevoEstado){showToast('Selecciona un estado',true);return;}
     btn.disabled=true;btn.innerHTML='<div class="spinner-sm"></div> Guardando...';sync(true);
-    if(nuevoEstado!==e.status){
-      await sb.from('equipos').update({status:nuevoEstado}).eq('id',activeId);
-      const idx=EQ.findIndex(x=>x.id===activeId);
-      if(idx>=0) EQ[idx].status=nuevoEstado;
-    }
+    await sb.from('equipos').update({status:nuevoEstado}).eq('id',activeId);
+    const idx=EQ.findIndex(x=>x.id===activeId);
+    if(idx>=0) EQ[idx].status=nuevoEstado;
     sync(false);
     closeModal();renderStats();applyFilters();
     showToast('✓ Estado actualizado — '+activeId);
@@ -374,16 +372,40 @@ async function guardar(){
   if(!fecha){document.getElementById('m-fecha').style.borderColor='var(--red)';return;}
   if(!horo){document.getElementById('m-horo').style.borderColor='var(--red)';return;}
   btn.disabled=true;btn.innerHTML='<div class="spinner-sm"></div> Guardando...';sync(true);
-  const{error}=await sb.from('mantenimientos').insert({equipo_id:activeId,placa:e.codigo||e.placa||e.id,cd:e.cd,tipo:e.tipo,marca:e.marca,modelo:e.modelo,fecha_mantenimiento:fecha,horometro:parseFloat(horo),supervisor:sup,estado:estadoFinal});
-  if(nuevoEstado&&nuevoEstado!==e.status){
-    await sb.from('equipos').update({status:nuevoEstado}).eq('id',activeId);
-    const idx=EQ.findIndex(x=>x.id===activeId);
-    if(idx>=0) EQ[idx].status=nuevoEstado;
+
+  // 1. Insertar en mantenimientos (trazabilidad)
+  const{error}=await sb.from('mantenimientos').insert({
+    equipo_id:activeId,placa:e.codigo||e.placa||e.id,
+    cd:e.cd,tipo:e.tipo,marca:e.marca,modelo:e.modelo,
+    fecha_mantenimiento:fecha,horometro:parseFloat(horo),
+    supervisor:sup,estado:estadoFinal
+  });
+  if(error){btn.disabled=false;btn.innerHTML='<span id="save-lbl">✓ Guardar mantenimiento</span>';showToast('Error: '+error.message,true);sync(false);return;}
+
+  // 2. Actualizar tabla equipos: fecha, horómetro y estado
+  const{error:errEq}=await sb.from('equipos').update({
+    horometro_ultimo_mant: String(parseFloat(horo)),
+    fecha_ultimo_mant: fecha,
+    status: estadoFinal
+  }).eq('id',activeId);
+
+  if(errEq){
+    console.error('Error actualizando equipos:',errEq);
+    showToast('Mant. guardado pero error al actualizar equipo: '+errEq.message,true);
   }
+
+  // Actualizar estado local
+  const idx=EQ.findIndex(x=>x.id===activeId);
+  if(idx>=0){
+    EQ[idx].status=estadoFinal;
+    EQ[idx].fecha_ultimo_mant=fecha;
+    EQ[idx].horometro_ultimo_mant=String(parseFloat(horo));
+  }
+  // Actualizar live state
+  live[activeId]={fecha, horo:parseFloat(horo), _set:true};
   sync(false);
   if(error){btn.disabled=false;btn.innerHTML='<span id="save-lbl">✓ Guardar en Supabase</span>';showToast('Error: '+error.message,true);return;}
-  live[activeId]={fecha,horo:parseFloat(horo),_set:true};
-  allMants.unshift({equipo_id:activeId,placa:e.placa||e.id,cd:e.cd,tipo:e.tipo,marca:e.marca,modelo:e.modelo,fecha_mantenimiento:fecha,horometro:parseFloat(horo),supervisor:sup,created_at:new Date().toISOString()});
+  allMants.unshift({equipo_id:activeId,placa:e.codigo||e.placa||e.id,cd:e.cd,tipo:e.tipo,marca:e.marca,modelo:e.modelo,fecha_mantenimiento:fecha,horometro:parseFloat(horo),supervisor:sup,estado:estadoFinal,created_at:new Date().toISOString()});
   closeModal();renderStats();applyFilters();renderHistPanel();
   showToast(`✓ Guardado en Supabase — ${activeId}`);
 }
