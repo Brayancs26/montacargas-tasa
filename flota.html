@@ -166,17 +166,36 @@ input.fld:focus{border-color:var(--accent);}
     </div>
     <div class="modal-body">
       <div class="info-grid" id="m-info"></div>
-      <div class="sect-lbl">Registrar mantenimiento</div>
-      <div class="fld-row">
-        <div><label class="fld">Fecha de mantenimiento *</label><input type="date" id="m-fecha" class="fld"></div>
-        <div><label class="fld">Horómetro *</label><input type="number" id="m-horo" class="fld" placeholder="ej. 1250" inputmode="decimal" step="0.1"></div>
+      <!-- TABS modo -->
+      <div style="display:flex;gap:6px;margin-bottom:16px;background:var(--surf2);border-radius:var(--r-sm);padding:4px;">
+        <button type="button" id="tab-estado" onclick="setTab('estado')" style="flex:1;padding:8px;border:none;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;font-family:var(--sans);background:var(--accent);color:white;transition:all 0.15s;">Estado operativo</button>
+        <button type="button" id="tab-mant" onclick="setTab('mant')" style="flex:1;padding:8px;border:none;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;font-family:var(--sans);background:transparent;color:var(--text2);transition:all 0.15s;">Registrar mantenimiento</button>
       </div>
-      <div style="margin-bottom:10px;">
-        <label class="fld">Estado del equipo *</label>
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:6px;" id="estado-btns">
-          <button type="button" onclick="setEstado('Operativo')" id="eb-op" class="estado-btn" style="padding:10px 6px;border-radius:var(--r-sm);border:1.5px solid rgba(16,185,129,0.3);background:rgba(16,185,129,0.08);color:var(--green);font-size:12px;font-weight:600;cursor:pointer;font-family:var(--sans);transition:all 0.15s;">✓ Operativo</button>
-          <button type="button" onclick="setEstado('Inoperativo')" id="eb-inop" class="estado-btn" style="padding:10px 6px;border-radius:var(--r-sm);border:1.5px solid rgba(239,68,68,0.3);background:rgba(239,68,68,0.06);color:var(--red);font-size:12px;font-weight:600;cursor:pointer;font-family:var(--sans);transition:all 0.15s;">✕ Inoperativo</button>
-          <button type="button" onclick="setEstado('En proceso de baja')" id="eb-baja" class="estado-btn" style="padding:10px 6px;border-radius:var(--r-sm);border:1.5px solid rgba(245,158,11,0.3);background:rgba(245,158,11,0.06);color:var(--amber);font-size:12px;font-weight:600;cursor:pointer;font-family:var(--sans);transition:all 0.15s;">↓ En baja</button>
+
+      <!-- PANEL: solo estado -->
+      <div id="panel-estado">
+        <label class="fld" style="margin-bottom:10px;display:block;">Selecciona el estado actual del equipo</label>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">
+          <button type="button" onclick="setEstado('Operativo')" id="eb-op" style="padding:14px 6px;border-radius:var(--r-sm);border:1.5px solid rgba(16,185,129,0.3);background:rgba(16,185,129,0.08);color:var(--green);font-size:12px;font-weight:600;cursor:pointer;font-family:var(--sans);transition:all 0.15s;">✓ Operativo</button>
+          <button type="button" onclick="setEstado('Inoperativo')" id="eb-inop" style="padding:14px 6px;border-radius:var(--r-sm);border:1.5px solid rgba(239,68,68,0.3);background:rgba(239,68,68,0.06);color:var(--red);font-size:12px;font-weight:600;cursor:pointer;font-family:var(--sans);transition:all 0.15s;">✕ Inoperativo</button>
+          <button type="button" onclick="setEstado('En proceso de baja')" id="eb-baja" style="padding:14px 6px;border-radius:var(--r-sm);border:1.5px solid rgba(245,158,11,0.3);background:rgba(245,158,11,0.06);color:var(--amber);font-size:12px;font-weight:600;cursor:pointer;font-family:var(--sans);transition:all 0.15s;">↓ En baja</button>
+        </div>
+        <p style="font-size:11px;color:var(--text3);margin-top:10px;">Solo actualiza el estado del equipo sin registrar mantenimiento.</p>
+      </div>
+
+      <!-- PANEL: mantenimiento completo -->
+      <div id="panel-mant" style="display:none;">
+        <div class="fld-row">
+          <div><label class="fld">Fecha de mantenimiento *</label><input type="date" id="m-fecha" class="fld"></div>
+          <div><label class="fld">Horómetro *</label><input type="number" id="m-horo" class="fld" placeholder="ej. 1250" inputmode="decimal" step="0.1"></div>
+        </div>
+        <div style="margin-bottom:10px;">
+          <label class="fld">Estado del equipo</label>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:6px;">
+            <button type="button" onclick="setEstado('Operativo')" id="mb-op" style="padding:10px 6px;border-radius:var(--r-sm);border:1.5px solid rgba(16,185,129,0.3);background:rgba(16,185,129,0.08);color:var(--green);font-size:12px;font-weight:600;cursor:pointer;font-family:var(--sans);transition:all 0.15s;">✓ Operativo</button>
+            <button type="button" onclick="setEstado('Inoperativo')" id="mb-inop" style="padding:10px 6px;border-radius:var(--r-sm);border:1.5px solid rgba(239,68,68,0.3);background:rgba(239,68,68,0.06);color:var(--red);font-size:12px;font-weight:600;cursor:pointer;font-family:var(--sans);transition:all 0.15s;">✕ Inoperativo</button>
+            <button type="button" onclick="setEstado('En proceso de baja')" id="mb-baja" style="padding:10px 6px;border-radius:var(--r-sm);border:1.5px solid rgba(245,158,11,0.3);background:rgba(245,158,11,0.06);color:var(--amber);font-size:12px;font-weight:600;cursor:pointer;font-family:var(--sans);transition:all 0.15s;">↓ En baja</button>
+          </div>
         </div>
       </div>
       <div class="sect-lbl" id="hist-lbl" style="display:none;">Últimos registros</div>
@@ -184,7 +203,7 @@ input.fld:focus{border-color:var(--accent);}
     </div>
     <div class="modal-footer">
       <button class="btn-cancel" onclick="closeModal()">Cancelar</button>
-      <button class="btn-save" id="btn-save" onclick="guardar()"><span id="save-lbl">✓ Guardar en Supabase</span></button>
+      <button class="btn-save" id="btn-save" onclick="guardar()"><span id="save-lbl">✓ Guardar estado</span></button>
     </div>
   </div>
 </div>
@@ -287,8 +306,9 @@ async function openModal(id){
   document.getElementById('m-horo').value='';
   document.getElementById('m-fecha').style.borderColor='';document.getElementById('m-horo').style.borderColor='';
   nuevoEstado=null;
-  ['eb-op','eb-inop','eb-baja'].forEach(id=>{const el=document.getElementById(id);if(el){el.style.opacity='1';el.style.boxShadow='none';}});
-  // Pre-seleccionar estado actual del equipo
+  modoTab='estado';
+  setTab('estado');
+  ['eb-op','eb-inop','eb-baja','mb-op','mb-inop','mb-baja'].forEach(id=>{const el=document.getElementById(id);if(el){el.style.opacity='1';el.style.boxShadow='none';}});
   const eAct=EQ.find(x=>x.id===id);
   if(eAct) setEstado(eAct.status);
   document.getElementById('save-lbl').textContent='✓ Guardar en Supabase';document.getElementById('btn-save').disabled=false;
@@ -299,29 +319,62 @@ async function openModal(id){
   document.getElementById('overlay').classList.add('open');document.body.style.overflow='hidden';
 }
 let nuevoEstado=null;
+let modoTab='estado';
+
+function setTab(tab){
+  modoTab=tab;
+  const isEstado=tab==='estado';
+  document.getElementById('panel-estado').style.display=isEstado?'block':'none';
+  document.getElementById('panel-mant').style.display=isEstado?'none':'block';
+  const tE=document.getElementById('tab-estado'),tM=document.getElementById('tab-mant');
+  tE.style.background=isEstado?'var(--accent)':'transparent';
+  tE.style.color=isEstado?'white':'var(--text2)';
+  tM.style.background=isEstado?'transparent':'var(--accent)';
+  tM.style.color=isEstado?'var(--text2)':'white';
+  document.getElementById('save-lbl').textContent=isEstado?'✓ Guardar estado':'✓ Guardar mantenimiento';
+}
+
 function setEstado(v){
   nuevoEstado=v;
-  ['eb-op','eb-inop','eb-baja'].forEach(id=>{
+  ['eb-op','eb-inop','eb-baja','mb-op','mb-inop','mb-baja'].forEach(id=>{
     const el=document.getElementById(id);
-    if(el) el.style.opacity='0.4';
+    if(el){el.style.opacity='0.4';el.style.boxShadow='none';}
   });
-  const map={'Operativo':'eb-op','Inoperativo':'eb-inop','En proceso de baja':'eb-baja'};
-  const el=document.getElementById(map[v]);
-  if(el){el.style.opacity='1';el.style.boxShadow='0 0 0 2px currentColor';}
+  const map={'Operativo':['eb-op','mb-op'],'Inoperativo':['eb-inop','mb-inop'],'En proceso de baja':['eb-baja','mb-baja']};
+  (map[v]||[]).forEach(id=>{
+    const el=document.getElementById(id);
+    if(el){el.style.opacity='1';el.style.boxShadow='0 0 0 2px currentColor';}
+  });
 }
 function closeModal(){document.getElementById('overlay').classList.remove('open');document.body.style.overflow='';activeId=null;const btn=document.getElementById('btn-save');if(btn){btn.disabled=false;btn.innerHTML='<span id="save-lbl">✓ Guardar en Supabase</span>';}}
 function closeBg(e){if(e.target===document.getElementById('overlay'))closeModal();}
 async function guardar(){
+  const sup=document.getElementById('sup-name').value.trim()||'Sin nombre';
+  const btn=document.getElementById('btn-save');
+  const e=EQ.find(x=>x.id===activeId);
+  const estadoFinal=nuevoEstado||e.status;
+
+  // MODO SOLO ESTADO — no necesita fecha ni horómetro
+  if(modoTab==='estado'){
+    if(!nuevoEstado){showToast('Selecciona un estado',true);return;}
+    btn.disabled=true;btn.innerHTML='<div class="spinner-sm"></div> Guardando...';sync(true);
+    if(nuevoEstado!==e.status){
+      await sb.from('equipos').update({status:nuevoEstado}).eq('id',activeId);
+      const idx=EQ.findIndex(x=>x.id===activeId);
+      if(idx>=0) EQ[idx].status=nuevoEstado;
+    }
+    sync(false);
+    closeModal();renderStats();applyFilters();
+    showToast('✓ Estado actualizado — '+activeId);
+    return;
+  }
+
+  // MODO MANTENIMIENTO — requiere fecha y horómetro
   const fecha=document.getElementById('m-fecha').value,horo=document.getElementById('m-horo').value;
   if(!fecha){document.getElementById('m-fecha').style.borderColor='var(--red)';return;}
   if(!horo){document.getElementById('m-horo').style.borderColor='var(--red)';return;}
-  const sup=document.getElementById('sup-name').value.trim()||'Sin nombre';
-  const btn=document.getElementById('btn-save');
   btn.disabled=true;btn.innerHTML='<div class="spinner-sm"></div> Guardando...';sync(true);
-  const e=EQ.find(x=>x.id===activeId);
-  const estadoFinal=nuevoEstado||e.status;
   const{error}=await sb.from('mantenimientos').insert({equipo_id:activeId,placa:e.codigo||e.placa||e.id,cd:e.cd,tipo:e.tipo,marca:e.marca,modelo:e.modelo,fecha_mantenimiento:fecha,horometro:parseFloat(horo),supervisor:sup,estado:estadoFinal});
-  // Actualizar estado en tabla equipos si cambió
   if(nuevoEstado&&nuevoEstado!==e.status){
     await sb.from('equipos').update({status:nuevoEstado}).eq('id',activeId);
     const idx=EQ.findIndex(x=>x.id===activeId);
