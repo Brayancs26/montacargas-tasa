@@ -165,24 +165,50 @@ select.fld{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.
 <div class="sync-bar" id="sync-bar"></div>
 <div class="toast" id="toast"></div>
 
-<!-- SCANNER QR -->
-<div class="scanner-screen hide" id="scanner-screen">
-  <video id="scanner-video" class="scanner-video" autoplay muted playsinline></video>
-  <div class="scanner-overlay">
-    <div class="scanner-frame">
-      <div class="scanner-corner-tr"></div>
-      <div class="scanner-corner-bl"></div>
-      <div class="scanner-line"></div>
+<!-- SELECT SCREEN -->
+<div class="select-screen" id="select-screen" style="display:none;">
+  <div class="select-card">
+    <div class="select-logo">
+      <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round">
+        <path d="M9 11l3 3L22 4"/>
+        <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/>
+      </svg>
     </div>
-    <div class="scanner-title">Apunta al QR del montacargas</div>
-    <div class="scanner-sub">La cámara detectará el código automáticamente</div>
-    <div class="scanner-error" id="scanner-error">No se pudo acceder a la cámara.<br>Verifica los permisos del navegador.</div>
+    <div class="select-title">Checklist de Seguridad</div>
+    <div class="select-sub">Selecciona el equipo que vas a operar</div>
+    <div class="db-badge">
+      <span class="db-dot" id="sel-db-dot"></span>
+      <span id="sel-db-txt" style="color:var(--text3)">Cargando equipos...</span>
+    </div>
+
+    <div class="select-group">
+      <label>Filtrar por CD / Planta</label>
+      <select class="filter-cd" id="sel-cd" onchange="filtrarEquipos()">
+        <option value="">Todos los CDs</option>
+      </select>
+    </div>
+
+    <div class="select-group">
+      <label>Equipo *</label>
+      <select class="equipo-select" id="sel-equipo" onchange="onEquipoChange()">
+        <option value="">— Selecciona el equipo —</option>
+      </select>
+      <div class="equipo-preview" id="equipo-preview">
+        <div class="ep-row"><span class="ep-key">Marca / Modelo</span><span class="ep-val" id="ep-modelo">—</span></div>
+        <div class="ep-row"><span class="ep-key">Capacidad</span><span class="ep-val" id="ep-cap">—</span></div>
+        <div class="ep-row"><span class="ep-key">Combustible</span><span class="ep-val" id="ep-comb">—</span></div>
+        <div class="ep-row"><span class="ep-key">Estado</span><span class="ep-val" id="ep-status">—</span></div>
+      </div>
+    </div>
+
+    <button class="btn-iniciar" id="btn-iniciar" onclick="iniciarChecklist()" disabled>
+      Iniciar inspección →
+    </button>
   </div>
-  <button class="scanner-cancel" onclick="cerrarScanner()">Cancelar</button>
 </div>
 
 <!-- HEADER -->
-<div class="header">
+<div class="header" id="header">
   <div class="header-inner">
     <div class="logo">
       <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round">
@@ -534,85 +560,183 @@ let supWsp = ''; // número supervisor para WhatsApp
 
 function getP(k){ return new URLSearchParams(window.location.search).get(k)||''; }
 
-// ─── INIT ───────────────────────────────────────────────────
-// ── SCANNER QR ──────────────────────────────────────────
-let scanStream = null;
-let scanInterval = null;
+// ── SELECTOR DE EQUIPO ────────────────────────────────────
+let equiposSB = [];
 
-async function abrirScanner(){
-  const screen = document.getElementById('scanner-screen');
-  const video  = document.getElementById('scanner-video');
-  const errEl  = document.getElementById('scanner-error');
-  screen.classList.remove('hide');
-  errEl.classList.remove('show');
+async function mostrarSelector(){
+  // Ocultar app, mostrar selector
+  document.getElementById('selector-screen').style.display = 'block';
+  document.getElementById('steps-wrap').style.display      = 'none';
+  document.getElementById('bottom-nav').style.display      = 'none';
+  document.getElementById('prog-wrap').style.display       = 'none';
+  sync(true);
 
   try {
-    scanStream = await navigator.mediaDevices.getUserMedia({
-      video: { facingMode: 'environment', width:{ideal:1280}, height:{ideal:720} }
-    });
-    video.srcObject = scanStream;
-    await video.play();
+    const { data, error } = await sb
+      .from('equipos')
+      .select('id,codigo,placa,marca,modelo,capacidad,combustible,cd,status')
+      .order('cd').order('id');
+    if(error) throw error;
+    equiposSB = data;
 
-    // Escanear con BarcodeDetector (Chrome/Android nativo)
-    if('BarcodeDetector' in window){
-      const detector = new BarcodeDetector({formats:['qr_code']});
-      scanInterval = setInterval(async ()=>{
-        try{
-          const codes = await detector.detect(video);
-          if(codes.length > 0){
-            const url = codes[0].rawValue;
-            if(url.includes('checklist.html')){
-              cerrarScanner();
-              window.location.href = url;
-            }
-          }
-        }catch(e){}
-      }, 400);
-    } else {
-      // Fallback: usar jsQR
-      await loadJsQR();
-      const canvas = document.createElement('canvas');
-      const ctx2   = canvas.getContext('2d');
-      scanInterval = setInterval(()=>{
-        if(video.readyState === video.HAVE_ENOUGH_DATA){
-          canvas.width  = video.videoWidth;
-          canvas.height = video.videoHeight;
-          ctx2.drawImage(video, 0, 0, canvas.width, canvas.height);
-          const imgData = ctx2.getImageData(0, 0, canvas.width, canvas.height);
-          const code    = window.jsQR && window.jsQR(imgData.data, imgData.width, imgData.height);
-          if(code && code.data.includes('checklist.html')){
-            cerrarScanner();
-            window.location.href = code.data;
-          }
+    const sel = document.getElementById('eq-selector');
+    sel.innerHTML = '<option value="">-- Selecciona un equipo --</option>';
+
+    // Agrupar por CD
+    const porCD = {};
+    data.forEach(e => {
+      if(!porCD[e.cd]) porCD[e.cd] = [];
+      porCD[e.cd].push(e);
+    });
+
+    Object.keys(porCD).sort().forEach(cd => {
+      const grp = document.createElement('optgroup');
+      grp.label = cd;
+      porCD[cd].forEach(e => {
+        const id    = e.codigo || e.placa || e.id;
+        const label = `${id}  ·  ${cd}`;
+        const opt   = document.createElement('option');
+        opt.value       = e.id;
+        opt.textContent = label;
+        if(e.status === 'Inoperativo' || e.status === 'En proceso de baja'){
+          opt.textContent += '  ⚠';
+          opt.style.color = '#f59e0b';
         }
-      }, 400);
-    }
-  } catch(err){
-    errEl.classList.add('show');
-    console.error('Cámara:', err);
+        grp.appendChild(opt);
+      });
+      sel.appendChild(grp);
+    });
+
+  } catch(err) {
+    document.getElementById('eq-selector').innerHTML =
+      '<option value="">Error cargando equipos — reintenta</option>';
+    showToastMsg('Error conectando a Supabase: ' + err.message);
+  }
+  sync(false);
+}
+
+function onSelectEquipo(){
+  const id  = document.getElementById('eq-selector').value;
+  const btn = document.getElementById('btn-iniciar');
+  const prev = document.getElementById('eq-preview');
+
+  if(!id){ btn.disabled=true; prev.classList.remove('show'); return; }
+
+  const eq = equiposSB.find(e => e.id === id);
+  if(!eq){ btn.disabled=true; return; }
+
+  // Mostrar preview
+  document.getElementById('prev-modelo').textContent  = [eq.marca,eq.modelo].filter(Boolean).join(' ') || '—';
+  document.getElementById('prev-cap').textContent      = eq.capacidad ? eq.capacidad + ' TM' : '—';
+  document.getElementById('prev-comb').textContent     = eq.combustible || '—';
+  document.getElementById('prev-status').textContent   = eq.status || '—';
+  document.getElementById('prev-status').style.color   =
+    eq.status==='Operativo' ? 'var(--green)' :
+    eq.status==='Inoperativo' ? 'var(--red)' : 'var(--amber)';
+  prev.classList.add('show');
+  btn.disabled = false;
+}
+
+function iniciarChecklist(){
+  const id = document.getElementById('eq-selector').value;
+  const eq = equiposSB.find(e => e.id === id);
+  if(!eq) return;
+
+  // Redirigir con parámetros del equipo seleccionado
+  const params = new URLSearchParams({
+    placa:  eq.placa  || eq.codigo || eq.id,
+    codigo: eq.codigo || eq.id,
+    marca:  eq.marca  || '',
+    modelo: eq.modelo || '',
+    cap:    eq.capacidad || '',
+    cd:     eq.cd     || '',
+    comb:   eq.combustible || '',
+  });
+  window.location.href = 'checklist.html?' + params.toString();
+}
+
+// ─── INIT ───────────────────────────────────────────────────
+// ── SELECT SCREEN ───────────────────────────────────────
+let equiposBD = [];
+let equipoSeleccionado = null;
+
+async function cargarEquiposSelect(){
+  try{
+    const{data,error}=await sb.from('equipos')
+      .select('id,codigo,placa,cd,marca,modelo,capacidad,combustible,status')
+      .order('cd').order('id');
+    if(error) throw error;
+    equiposBD = data;
+
+    // Poblar filtro CD
+    const cds=[...new Set(data.map(e=>e.cd).filter(Boolean))].sort();
+    const selCd=document.getElementById('sel-cd');
+    selCd.innerHTML='<option value="">Todos los CDs</option>'+
+      cds.map(cd=>`<option value="${cd}">${cd}</option>`).join('');
+
+    filtrarEquipos();
+
+    document.getElementById('sel-db-dot').className='db-dot ok';
+    document.getElementById('sel-db-txt').textContent=data.length+' equipos cargados';
+    document.getElementById('sel-db-txt').style.color='var(--green)';
+  }catch(err){
+    document.getElementById('sel-db-dot').className='db-dot err';
+    document.getElementById('sel-db-txt').textContent='Error al cargar';
+    document.getElementById('sel-db-txt').style.color='var(--red)';
   }
 }
 
-function cerrarScanner(){
-  if(scanInterval){ clearInterval(scanInterval); scanInterval=null; }
-  if(scanStream){ scanStream.getTracks().forEach(t=>t.stop()); scanStream=null; }
-  document.getElementById('scanner-screen').classList.add('hide');
+function filtrarEquipos(){
+  const cd=document.getElementById('sel-cd').value;
+  const filtered=cd?equiposBD.filter(e=>e.cd===cd):equiposBD;
+  const sel=document.getElementById('sel-equipo');
+  sel.innerHTML='<option value="">— Selecciona el equipo —</option>'+
+    filtered.map(e=>{
+      const label=(e.codigo&&e.codigo.trim())?e.codigo.trim():(e.placa||e.id);
+      const planta=e.cd?` · ${e.cd}`:'';
+      return `<option value="${e.id}">${label}${planta}</option>`;
+    }).join('');
+  onEquipoChange();
 }
 
-function loadJsQR(){
-  return new Promise(res=>{
-    if(window.jsQR){ res(); return; }
-    const s = document.createElement('script');
-    s.src = 'https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js';
-    s.onload = res;
-    document.head.appendChild(s);
-  });
+function onEquipoChange(){
+  const id=document.getElementById('sel-equipo').value;
+  const prev=document.getElementById('equipo-preview');
+  const btn=document.getElementById('btn-iniciar');
+  if(!id){prev.classList.remove('show');btn.disabled=true;equipoSeleccionado=null;return;}
+  equipoSeleccionado=equiposBD.find(e=>e.id===id);
+  if(!equipoSeleccionado){prev.classList.remove('show');btn.disabled=true;return;}
+  const e=equipoSeleccionado;
+  document.getElementById('ep-modelo').textContent=[e.marca,e.modelo].filter(Boolean).join(' ')||'—';
+  document.getElementById('ep-cap').textContent=e.capacidad?e.capacidad+' TM':'—';
+  document.getElementById('ep-comb').textContent=e.combustible||'—';
+  const st=document.getElementById('ep-status');
+  st.textContent=e.status||'—';
+  st.style.color=e.status==='Operativo'?'var(--green)':e.status==='Inoperativo'?'var(--red)':'var(--amber)';
+  prev.classList.add('show');
+  btn.disabled=false;
 }
 
-window.addEventListener('DOMContentLoaded', async ()=>{
-  // Si no hay placa (viene del menú sin QR) → abrir scanner
+function iniciarChecklist(){
+  if(!equipoSeleccionado) return;
+  const e=equipoSeleccionado;
+  const label=(e.codigo&&e.codigo.trim())?e.codigo.trim():(e.placa||e.id);
+  // Setear UNIT con datos del equipo seleccionado
+  UNIT.placa   = e.placa  || label;
+  UNIT.codigo  = e.codigo || label;
+  UNIT.marca   = e.marca  || '';
+  UNIT.modelo  = e.modelo || '';
+  UNIT.cap     = e.capacidad || '';
+  UNIT.cd      = e.cd     || '';
+  UNIT.comb    = e.combustible || '';
+  document.getElementById('select-screen').style.display='none';
+  iniciarApp();
+}
+
+async function iniciarApp(){
+  // ── Si viene sin placa → mostrar selector ──────────────
   if(!UNIT.placa && !UNIT.codigo){
-    abrirScanner();
+    await mostrarSelector();
     return;
   }
 
@@ -653,6 +777,19 @@ window.addEventListener('DOMContentLoaded', async ()=>{
   }
 
   renderPage(0);
+}
+
+// ── INIT ─────────────────────────────────────────────────
+  // Si no hay placa → mostrar select screen
+  if(!UNIT.placa && !UNIT.codigo){
+    document.getElementById('select-screen').style.display='flex';
+    document.getElementById('header').style.display='none';
+    document.getElementById('steps-wrap').style.display='none';
+    document.getElementById('bottom-nav').style.display='none';
+    cargarEquiposSelect();
+  } else {
+    iniciarApp();
+  }
 });
 
 // ─── FIRMA HELPER ───────────────────────────────────────────
