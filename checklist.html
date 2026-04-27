@@ -106,10 +106,7 @@ select.fld{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.
 .item-obs{display:none;margin-top:8px;}
 .item-obs.show{display:block;}
 .item-obs textarea{width:100%;background:var(--surf2);border:1.5px solid rgba(239,68,68,0.3);border-radius:var(--r-sm);color:var(--text);font-family:var(--sans);font-size:13px;padding:8px 10px;outline:none;resize:none;}
-.tarj-roja{display:none;align-items:center;gap:5px;margin-top:6px;}
-.tarj-roja.show{display:flex;}
-.tarj-check{width:16px;height:16px;accent-color:var(--red);cursor:pointer;}
-.tarj-lbl{font-size:11px;color:var(--red);}
+
 
 /* CHECK BUTTONS */
 .check-btns{display:flex;gap:5px;flex-shrink:0;}
@@ -167,6 +164,22 @@ select.fld{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.
 <body>
 <div class="sync-bar" id="sync-bar"></div>
 <div class="toast" id="toast"></div>
+
+<!-- SCANNER QR -->
+<div class="scanner-screen hide" id="scanner-screen">
+  <video id="scanner-video" class="scanner-video" autoplay muted playsinline></video>
+  <div class="scanner-overlay">
+    <div class="scanner-frame">
+      <div class="scanner-corner-tr"></div>
+      <div class="scanner-corner-bl"></div>
+      <div class="scanner-line"></div>
+    </div>
+    <div class="scanner-title">Apunta al QR del montacargas</div>
+    <div class="scanner-sub">La cámara detectará el código automáticamente</div>
+    <div class="scanner-error" id="scanner-error">No se pudo acceder a la cámara.<br>Verifica los permisos del navegador.</div>
+  </div>
+  <button class="scanner-cancel" onclick="cerrarScanner()">Cancelar</button>
+</div>
 
 <!-- HEADER -->
 <div class="header">
@@ -312,10 +325,6 @@ select.fld{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.
     <div style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.25);border-radius:var(--r);padding:12px 14px;margin-bottom:14px;" id="crit-list"></div>
   </div>
 
-  <div class="fld-grp">
-    <label class="fld">Horómetro final</label>
-    <input type="number" id="f-horo-fin" class="fld" placeholder="hrs" inputmode="decimal" step="0.1">
-  </div>
   <div class="fld-grp">
     <label class="fld">Observaciones generales</label>
     <textarea id="f-obs" class="fld" rows="3" placeholder="Defectos encontrados, condiciones especiales..." style="resize:none;"></textarea>
@@ -526,7 +535,87 @@ let supWsp = ''; // número supervisor para WhatsApp
 function getP(k){ return new URLSearchParams(window.location.search).get(k)||''; }
 
 // ─── INIT ───────────────────────────────────────────────────
+// ── SCANNER QR ──────────────────────────────────────────
+let scanStream = null;
+let scanInterval = null;
+
+async function abrirScanner(){
+  const screen = document.getElementById('scanner-screen');
+  const video  = document.getElementById('scanner-video');
+  const errEl  = document.getElementById('scanner-error');
+  screen.classList.remove('hide');
+  errEl.classList.remove('show');
+
+  try {
+    scanStream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: 'environment', width:{ideal:1280}, height:{ideal:720} }
+    });
+    video.srcObject = scanStream;
+    await video.play();
+
+    // Escanear con BarcodeDetector (Chrome/Android nativo)
+    if('BarcodeDetector' in window){
+      const detector = new BarcodeDetector({formats:['qr_code']});
+      scanInterval = setInterval(async ()=>{
+        try{
+          const codes = await detector.detect(video);
+          if(codes.length > 0){
+            const url = codes[0].rawValue;
+            if(url.includes('checklist.html')){
+              cerrarScanner();
+              window.location.href = url;
+            }
+          }
+        }catch(e){}
+      }, 400);
+    } else {
+      // Fallback: usar jsQR
+      await loadJsQR();
+      const canvas = document.createElement('canvas');
+      const ctx2   = canvas.getContext('2d');
+      scanInterval = setInterval(()=>{
+        if(video.readyState === video.HAVE_ENOUGH_DATA){
+          canvas.width  = video.videoWidth;
+          canvas.height = video.videoHeight;
+          ctx2.drawImage(video, 0, 0, canvas.width, canvas.height);
+          const imgData = ctx2.getImageData(0, 0, canvas.width, canvas.height);
+          const code    = window.jsQR && window.jsQR(imgData.data, imgData.width, imgData.height);
+          if(code && code.data.includes('checklist.html')){
+            cerrarScanner();
+            window.location.href = code.data;
+          }
+        }
+      }, 400);
+    }
+  } catch(err){
+    errEl.classList.add('show');
+    console.error('Cámara:', err);
+  }
+}
+
+function cerrarScanner(){
+  if(scanInterval){ clearInterval(scanInterval); scanInterval=null; }
+  if(scanStream){ scanStream.getTracks().forEach(t=>t.stop()); scanStream=null; }
+  document.getElementById('scanner-screen').classList.add('hide');
+}
+
+function loadJsQR(){
+  return new Promise(res=>{
+    if(window.jsQR){ res(); return; }
+    const s = document.createElement('script');
+    s.src = 'https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js';
+    s.onload = res;
+    document.head.appendChild(s);
+  });
+}
+
 window.addEventListener('DOMContentLoaded', async ()=>{
+  // Si no hay placa (viene del menú sin QR) → abrir scanner
+  if(!UNIT.placa && !UNIT.codigo){
+    abrirScanner();
+    return;
+  }
+
   // UI unidad
   document.getElementById('ui-placa').textContent  = UNIT.placa  || '—';
   document.getElementById('ui-codigo').textContent = UNIT.codigo || '—';
@@ -538,7 +627,7 @@ window.addEventListener('DOMContentLoaded', async ()=>{
   if(UNIT.comb) setComb(UNIT.comb);
 
   // Inicializar ítems
-  SECCIONES.forEach(sec=>sec.items.forEach(i=>estado[i.id]={val:null,obs:'',tarjeta_roja:false}));
+  SECCIONES.forEach(sec=>sec.items.forEach(i=>estado[i.id]={val:null,obs:''}));
 
   // Renderizar secciones
   renderSecciones();
@@ -624,10 +713,7 @@ function buildSeccion(sec){
         <div><span class="item-crit ${item.crit==='C'?'crit-c':'crit-nc'}">${item.crit==='C'?'CRÍTICO':'NO CRÍTICO'}</span></div>
         <div class="item-obs" id="obs-${item.id}">
           <textarea rows="2" placeholder="Describe el problema..." oninput="estado['${item.id}'].obs=this.value" style="margin-top:4px;"></textarea>
-          <div class="tarj-roja" id="tarj-${item.id}">
-            <input type="checkbox" class="tarj-check" id="tr-${item.id}" onchange="estado['${item.id}'].tarjeta_roja=this.checked">
-            <label for="tr-${item.id}" class="tarj-lbl">Cuenta con Tarjeta Roja</label>
-          </div>
+
         </div>
       </div>
       <div class="check-btns">
@@ -667,10 +753,9 @@ function applyItemState(id){
     if(b) b.className='cbtn'+(estado[id].val===v?' '+v:'');
   });
   const obsEl=document.getElementById('obs-'+id);
-  const tarjEl=document.getElementById('tarj-'+id);
   if(obsEl){
-    if(estado[id].val==='mal'){obsEl.classList.add('show');if(tarjEl)tarjEl.classList.add('show');}
-    else{obsEl.classList.remove('show');if(tarjEl)tarjEl.classList.remove('show');}
+    if(estado[id].val==='mal') obsEl.classList.add('show');
+    else obsEl.classList.remove('show');
   }
   // Highlight row if critical + mal
   const sec = SECCIONES.flatMap(s=>s.items).find(i=>i.id===id);
@@ -837,7 +922,7 @@ async function submitForm(){
     capacidad:UNIT.cap,cd:UNIT.cd,fuente_energia:combSelec,
     operador_nombre:document.getElementById('f-operador').value,
     horometro_inicial:parseFloat(document.getElementById('f-horo-ini').value)||null,
-    horometro_final:parseFloat(document.getElementById('f-horo-fin').value)||null,
+    horometro_final:null,
     total_items:allItems.length,items_bien:bien,items_mal:mal,items_na:na,
     items_criticos_mal:critMal.length,resultado,puede_operar:puedeOperar,
     observaciones:document.getElementById('f-obs').value,
@@ -858,7 +943,7 @@ async function submitForm(){
       item_id:i.id,seccion:sec.id,seccion_nombre:sec.nombre,
       descripcion:i.txt,criticidad:i.crit,
       estado:estado[i.id]?.val||'pendiente',
-      tarjeta_roja:estado[i.id]?.tarjeta_roja||false,
+      tarjeta_roja:false,
       observacion:estado[i.id]?.obs||'',
     };
   });
@@ -896,20 +981,29 @@ async function submitForm(){
     // WhatsApp supervisor por CD
     const supervisores = {
       'Matarani': '51983840664',
-      // Agregar más CDs: 'Callao': '51XXXXXXXXX',
     };
     const numSup = supervisores[UNIT.cd] || '';
+    const operadorNom = document.getElementById('f-operador').value;
+    const turnoVal    = document.getElementById('f-turno').value;
+    const msg = '🚫 *ALERTA EQUIPO BLOQUEADO*'
+      + '\n\n*Placa:* '    + (UNIT.placa || UNIT.codigo)
+      + '\n*CD:* '          + UNIT.cd
+      + '\n*Operador:* '    + operadorNom
+      + '\n*Turno:* '       + turnoVal
+      + '\n*Fecha/Hora:* '  + now.toLocaleDateString('es-PE') + ' ' + now.toLocaleTimeString('es-PE',{hour:'2-digit',minute:'2-digit'})
+      + '\n\n*Ítems críticos fallados:*'
+      + '\n' + critMal.map(i => '• ' + i.id + ': ' + i.txt).join('\n')
+      + '\n\n*ID Registro:* ' + recordId
+      + '\n\n⚠ El equipo NO puede operar hasta levantar las observaciones.';
 
-    // WhatsApp link
-    const msg=`🚫 *ALERTA EQUIPO BLOQUEADO*\n\n*Placa:* ${UNIT.placa}\n*CD:* ${UNIT.cd}\n*Operador:* ${document.getElementById('f-operador').value}\n*Turno:* ${document.getElementById('f-turno').value}\n*Fecha:* ${now.toLocaleDateString('es-PE')}\n\n*Ítems críticos fallados:*\n${critMal.map(i=>`• ${i.id}: ${i.txt}`).join('\n')}\n\n*ID Registro:* ${recordId}\n\n⚠ El equipo NO puede operar hasta levantar las observaciones.`;
     const wspUrl = numSup
       ? 'https://wa.me/' + numSup + '?text=' + encodeURIComponent(msg)
-      : 'https://wa.me/?text=' + encodeURIComponent(msg);
-    document.getElementById('wsp-link').href = wspUrl;
-    // Also update button text to show if number is configured
-    if(numSup){
-      document.getElementById('wsp-link').innerHTML = document.getElementById('wsp-link').innerHTML.replace('Notificar supervisor por WhatsApp','📲 Notificar supervisor · Matarani');
-    }
+      : 'https://wa.me/?text='   + encodeURIComponent(msg);
+
+    const wspBtn = document.getElementById('wsp-link');
+    wspBtn.href = wspUrl;
+    wspBtn.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>'
+      + (numSup ? ' 📲 Enviar alerta a supervisor (' + UNIT.cd + ')' : ' Enviar alerta por WhatsApp');
   }
 }
 
@@ -950,7 +1044,6 @@ function reiniciar(){
   document.getElementById('f-operador').value='';
   document.getElementById('f-turno').value='';
   document.getElementById('f-horo-ini').value='';
-  document.getElementById('f-horo-fin').value='';
   document.getElementById('f-obs').value='';
   document.getElementById('screen-ok').style.display='none';
   document.getElementById('screen-block').style.display='none';
