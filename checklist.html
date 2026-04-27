@@ -17,13 +17,13 @@
 }
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
 body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:100vh;padding-bottom:100px;}
-
-/* SYNC BAR */
 .sync-bar{height:3px;background:var(--accent);position:fixed;top:0;left:0;right:0;z-index:999;display:none;}
 .sync-bar.on{display:block;animation:sb 1.4s ease-in-out infinite;}
 @keyframes sb{0%{transform:scaleX(0);transform-origin:left}50%{transform:scaleX(1);transform-origin:left}51%{transform:scaleX(1);transform-origin:right}100%{transform:scaleX(0);transform-origin:right}}
+.toast{position:fixed;bottom:110px;left:50%;transform:translateX(-50%);background:var(--red);color:white;border-radius:10px;padding:10px 20px;font-size:13px;font-weight:500;z-index:9999;display:none;white-space:nowrap;}
+.toast.show{display:block;}
 
-/* HEADER */
+/* ── HEADER ── */
 .header{background:var(--surf);border-bottom:1px solid var(--bord2);padding:0 16px;position:sticky;top:0;z-index:100;}
 .header-inner{max-width:600px;margin:0 auto;display:flex;align-items:center;gap:12px;height:56px;}
 .logo{width:32px;height:32px;border-radius:8px;background:var(--green);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
@@ -31,13 +31,13 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:1
 .header-title{font-size:14px;font-weight:600;}
 .header-sub{font-size:11px;color:var(--text2);font-family:var(--mono);}
 
-/* STEPS */
+/* ── STEPS ── */
 .steps{padding:10px 16px 0;max-width:600px;margin:0 auto;display:flex;gap:4px;}
 .step-dot{flex:1;height:3px;border-radius:2px;background:var(--surf2);transition:background 0.3s;}
 .step-dot.done{background:var(--green);}
 .step-dot.active{background:var(--accent);opacity:0.6;}
 
-/* PROGRESS */
+/* ── PROGRESS ── */
 .prog-bar{max-width:600px;margin:0 auto;padding:8px 16px 0;}
 .prog-track{height:4px;background:var(--surf2);border-radius:2px;overflow:hidden;}
 .prog-fill{height:100%;background:var(--green);border-radius:2px;transition:width 0.3s;}
@@ -46,10 +46,34 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:1
 .pstat .ok{color:var(--green);font-weight:500;}
 .pstat .mal{color:var(--red);font-weight:500;}
 
-/* MAIN */
+/* ── MAIN ── */
 .main{max-width:600px;margin:0 auto;padding:16px;}
 
-/* UNIT CARD */
+/* ── SELECTOR SCREEN ── */
+.selector-wrap{max-width:600px;margin:0 auto;padding:24px 16px;}
+.selector-card{background:var(--surf);border:1px solid var(--bord2);border-radius:16px;padding:24px 20px;}
+.sel-logo{width:56px;height:56px;border-radius:14px;background:var(--green);display:flex;align-items:center;justify-content:center;margin:0 auto 18px;}
+.sel-logo svg{width:28px;height:28px;}
+.sel-title{font-size:20px;font-weight:600;text-align:center;margin-bottom:6px;}
+.sel-sub{font-size:13px;color:var(--text2);text-align:center;margin-bottom:24px;line-height:1.5;}
+.sel-label{font-size:12px;color:var(--text2);margin-bottom:6px;display:block;}
+.sel-select{width:100%;background:var(--surf2);border:1.5px solid var(--bord2);border-radius:var(--r-sm);color:var(--text);font-family:var(--sans);font-size:15px;padding:12px 36px 12px 14px;outline:none;appearance:none;cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M0 0l6 8 6-8z' fill='%237a8fa8'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center;transition:border-color 0.15s;margin-bottom:14px;}
+.sel-select:focus{border-color:var(--green);}
+.eq-preview{background:var(--surf2);border-radius:var(--r-sm);padding:12px 14px;margin-bottom:16px;display:none;}
+.eq-preview.show{display:block;}
+.eq-prev-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px;}
+.ep-f{background:var(--surf);border-radius:6px;padding:8px 10px;}
+.ep-k{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.06em;}
+.ep-v{font-size:13px;font-weight:500;color:var(--text);margin-top:2px;font-family:var(--mono);}
+.btn-iniciar{width:100%;height:52px;border-radius:12px;background:var(--green);color:#0a1628;border:none;font-family:var(--sans);font-size:15px;font-weight:600;cursor:pointer;transition:all 0.15s;display:flex;align-items:center;justify-content:center;gap:8px;}
+.btn-iniciar:disabled{background:var(--surf2);color:var(--text3);cursor:not-allowed;}
+.btn-iniciar:not(:disabled):hover{background:#059669;}
+.btn-iniciar:active{transform:scale(0.97);}
+.loading-eq{text-align:center;padding:20px;color:var(--text2);font-size:13px;}
+.spinner-sm{width:18px;height:18px;border:2px solid var(--surf2);border-top-color:var(--green);border-radius:50%;animation:spin 0.7s linear infinite;display:inline-block;vertical-align:middle;margin-right:8px;}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+/* ── UNIT CARD ── */
 .unit-card{background:var(--surf);border:1px solid var(--bord2);border-radius:var(--r);padding:14px 16px;margin-bottom:16px;}
 .unit-placa{font-family:var(--mono);font-size:20px;font-weight:500;color:var(--green);}
 .unit-info{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px;}
@@ -57,18 +81,13 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:1
 .unit-field-lbl{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.06em;}
 .unit-field-val{font-size:13px;font-weight:500;color:var(--text);margin-top:2px;}
 
-/* BLOCKING BANNER */
-.block-banner{background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.4);border-radius:var(--r);padding:14px 16px;margin-bottom:14px;display:none;}
-.block-banner.show{display:flex;gap:10px;align-items:flex-start;}
-.block-banner-icon{font-size:20px;flex-shrink:0;}
-.block-banner-title{font-size:14px;font-weight:600;color:var(--red);}
-.block-banner-sub{font-size:12px;color:var(--text2);margin-top:3px;line-height:1.5;}
-
-/* SECTION 2 BANNER (turno adicional) */
+/* ── BANNERS ── */
+.block-banner{background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.4);border-radius:var(--r);padding:14px 16px;margin-bottom:14px;display:none;gap:10px;align-items:flex-start;}
+.block-banner.show{display:flex;}
 .sec2-banner{background:rgba(37,99,235,0.1);border:1px solid rgba(37,99,235,0.3);border-radius:var(--r);padding:14px 16px;margin-bottom:14px;display:none;}
 .sec2-banner.show{display:block;}
 
-/* FORM FIELDS */
+/* ── FORM ── */
 label.fld{display:block;font-size:12px;color:var(--text2);margin-bottom:5px;}
 input.fld,select.fld,textarea.fld{width:100%;background:var(--surf2);border:1px solid var(--bord2);border-radius:var(--r-sm);color:var(--text);font-family:var(--sans);font-size:15px;padding:10px 12px;outline:none;transition:border-color 0.15s;appearance:none;}
 input.fld:focus,select.fld:focus,textarea.fld:focus{border-color:var(--accent);}
@@ -77,13 +96,11 @@ select.fld{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.
 .fld-grp{margin-bottom:12px;}
 .sect-lbl{font-size:10px;text-transform:uppercase;letter-spacing:0.1em;color:var(--text3);margin:18px 0 10px;display:flex;align-items:center;gap:8px;}
 .sect-lbl::after{content:'';flex:1;height:1px;background:var(--bord2);}
-
-/* COMBUSTIBLE SELECTOR */
 .comb-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;}
 .comb-btn{padding:10px;border-radius:var(--r-sm);border:1.5px solid var(--bord2);background:var(--surf2);color:var(--text2);font-size:12px;font-weight:500;cursor:pointer;font-family:var(--sans);transition:all 0.15s;text-align:center;}
 .comb-btn.sel{border-color:var(--accent);background:rgba(37,99,235,0.12);color:var(--accent);}
 
-/* CHECK SECTION */
+/* ── CHECK ITEMS ── */
 .check-section{background:var(--surf);border:1px solid var(--bord);border-radius:var(--r);overflow:hidden;margin-bottom:10px;}
 .check-sec-header{padding:11px 14px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--bord);cursor:pointer;user-select:none;}
 .check-sec-icon{width:28px;height:28px;border-radius:7px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
@@ -93,7 +110,6 @@ select.fld{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.
 .check-section.open .check-sec-chev{transform:rotate(180deg);}
 .check-items{display:none;}
 .check-section.open .check-items{display:block;}
-
 .check-item{padding:12px 14px;border-bottom:1px solid var(--bord);display:flex;align-items:flex-start;gap:10px;}
 .check-item:last-child{border-bottom:none;}
 .check-item.bloqueado{background:rgba(239,68,68,0.05);}
@@ -106,109 +122,93 @@ select.fld{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.
 .item-obs{display:none;margin-top:8px;}
 .item-obs.show{display:block;}
 .item-obs textarea{width:100%;background:var(--surf2);border:1.5px solid rgba(239,68,68,0.3);border-radius:var(--r-sm);color:var(--text);font-family:var(--sans);font-size:13px;padding:8px 10px;outline:none;resize:none;}
-
-
-/* CHECK BUTTONS */
 .check-btns{display:flex;gap:5px;flex-shrink:0;}
-.cbtn{width:40px;height:40px;border-radius:9px;border:1.5px solid transparent;background:var(--surf2);color:var(--text2);font-size:10px;font-weight:600;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all 0.12s;font-family:var(--sans);flex-direction:column;gap:1px;}
+.cbtn{width:40px;height:40px;border-radius:9px;border:1.5px solid transparent;background:var(--surf2);color:var(--text2);font-size:10px;font-weight:600;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all 0.12s;font-family:var(--sans);}
 .cbtn svg{width:15px;height:15px;}
 .cbtn:active{transform:scale(0.91);}
 .cbtn.bien{background:rgba(16,185,129,0.15);border-color:var(--green);color:var(--green);}
 .cbtn.mal{background:rgba(239,68,68,0.15);border-color:var(--red);color:var(--red);}
 .cbtn.na{background:rgba(138,154,181,0.12);border-color:var(--text2);color:var(--text2);}
 
-/* SIGNATURE */
+/* ── SUMMARY ── */
+.sum-row{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--bord);font-size:14px;}
+.sum-row:last-child{border-bottom:none;}
+
+/* ── FIRMA ── */
 .sig-wrap{background:var(--surf2);border:1.5px dashed var(--bord2);border-radius:var(--r);padding:4px;position:relative;}
-#sig-canvas{display:block;border-radius:9px;cursor:crosshair;touch-action:none;}
+#sig-canvas,#sig2-canvas{display:block;border-radius:9px;cursor:crosshair;touch-action:none;}
 .sig-clear{position:absolute;top:8px;right:8px;background:var(--surf);border:1px solid var(--bord2);border-radius:6px;padding:3px 9px;font-size:11px;color:var(--text2);cursor:pointer;font-family:var(--sans);}
 
-/* BOTTOM NAV */
-.bottom-nav{position:fixed;bottom:0;left:0;right:0;background:var(--surf);border-top:1px solid var(--bord2);padding:10px 16px 24px;display:flex;gap:8px;z-index:200;max-width:100%;}
+/* ── BOTTOM NAV ── */
+.bottom-nav{position:fixed;bottom:0;left:0;right:0;background:var(--surf);border-top:1px solid var(--bord2);padding:10px 16px 24px;display:flex;gap:8px;z-index:200;}
 .btn{flex:1;height:50px;border-radius:12px;border:none;font-family:var(--sans);font-size:15px;font-weight:600;cursor:pointer;transition:all 0.15s;display:flex;align-items:center;justify-content:center;gap:6px;}
 .btn:active{transform:scale(0.97);}
 .btn-ghost{background:var(--surf2);color:var(--text2);flex:0.4;}
 .btn-primary{background:var(--accent);color:white;}
 .btn-primary:disabled{background:var(--surf2);color:var(--text3);cursor:not-allowed;transform:none;}
 .btn-success{background:var(--green);color:#0a1628;}
-.btn-danger{background:var(--red);color:white;}
 
-/* SUCCESS */
-.success-screen{text-align:center;padding:40px 16px;}
-.success-icon{width:72px;height:72px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 20px;animation:popIn 0.4s cubic-bezier(0.34,1.56,0.64,1);}
+/* ── SUCCESS / BLOCKED ── */
+.result-screen{text-align:center;padding:40px 16px;}
+.result-icon{width:72px;height:72px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 20px;animation:popIn 0.4s cubic-bezier(0.34,1.56,0.64,1);}
 @keyframes popIn{from{transform:scale(0.5);opacity:0;}to{transform:scale(1);opacity:1;}}
-.success-title{font-size:22px;font-weight:600;margin-bottom:8px;}
-.success-sub{font-size:14px;color:var(--text2);line-height:1.5;margin-bottom:24px;}
-.record-pill{font-family:var(--mono);background:var(--surf);border:1px solid var(--bord2);border-radius:var(--r-sm);padding:10px 18px;font-size:12px;color:var(--green);display:inline-block;margin-bottom:24px;}
-.btn-nuevo{display:block;width:100%;height:50px;border-radius:12px;background:var(--accent);color:white;border:none;font-family:var(--sans);font-size:15px;font-weight:600;cursor:pointer;}
-.btn-turno{display:block;width:100%;height:50px;border-radius:12px;background:var(--surf2);color:var(--text);border:1px solid var(--bord2);font-family:var(--sans);font-size:14px;font-weight:500;cursor:pointer;margin-top:10px;}
+.result-title{font-size:22px;font-weight:600;margin-bottom:8px;}
+.result-sub{font-size:14px;color:var(--text2);line-height:1.5;margin-bottom:20px;}
+.record-pill{font-family:var(--mono);background:var(--surf);border:1px solid var(--bord2);border-radius:var(--r-sm);padding:10px 18px;font-size:12px;display:inline-block;margin-bottom:20px;}
+.wsp-btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;height:52px;border-radius:12px;background:#25D366;color:white;border:none;font-family:var(--sans);font-size:14px;font-weight:600;cursor:pointer;text-decoration:none;margin-bottom:10px;}
+.btn-nuevo{display:block;width:100%;height:50px;border-radius:12px;background:var(--accent);color:white;border:none;font-family:var(--sans);font-size:15px;font-weight:600;cursor:pointer;margin-bottom:10px;}
+.btn-sec2{display:block;width:100%;height:48px;border-radius:12px;background:var(--surf2);color:var(--text);border:1px solid var(--bord2);font-family:var(--sans);font-size:14px;cursor:pointer;}
 
-/* BLOCKED SUCCESS */
-.blocked-screen{text-align:center;padding:40px 16px;}
-.wsp-btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;height:52px;border-radius:12px;background:#25D366;color:white;border:none;font-family:var(--sans);font-size:15px;font-weight:600;cursor:pointer;text-decoration:none;margin-bottom:10px;}
-
-/* PAGE */
-.page{display:none;padding:16px;}
+/* ── PAGE ── */
+.page{display:none;}
 .page.active{display:block;}
 
-/* SPINNER */
-.spinner-sm{width:14px;height:14px;border:2px solid rgba(255,255,255,0.3);border-top-color:white;border-radius:50%;animation:spin 0.7s linear infinite;}
-@keyframes spin{to{transform:rotate(360deg);}}
-
-/* TOAST */
-.toast{position:fixed;bottom:110px;left:50%;transform:translateX(-50%);background:var(--red);color:white;border-radius:10px;padding:10px 20px;font-size:13px;font-weight:500;z-index:999;display:none;white-space:nowrap;}
-.toast.show{display:block;}
-
-@media(max-width:380px){.cbtn{width:36px;height:36px;}.check-item{padding:10px 12px;}}
+@media(max-width:380px){.cbtn{width:36px;height:36px;}}
 </style>
 </head>
 <body>
+
 <div class="sync-bar" id="sync-bar"></div>
 <div class="toast" id="toast"></div>
 
-<!-- SELECT SCREEN -->
-<div class="select-screen" id="select-screen" style="display:none;">
-  <div class="select-card">
-    <div class="select-logo">
+<!-- ═══ SELECTOR (cuando viene del menú sin QR) ═══ -->
+<div id="selector-wrap" class="selector-wrap" style="display:none;">
+  <div class="selector-card">
+    <div class="sel-logo">
       <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round">
         <path d="M9 11l3 3L22 4"/>
         <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/>
       </svg>
     </div>
-    <div class="select-title">Checklist de Seguridad</div>
-    <div class="select-sub">Selecciona el equipo que vas a operar</div>
-    <div class="db-badge">
-      <span class="db-dot" id="sel-db-dot"></span>
-      <span id="sel-db-txt" style="color:var(--text3)">Cargando equipos...</span>
-    </div>
-
-    <div class="select-group">
-      <label>Filtrar por CD / Planta</label>
-      <select class="filter-cd" id="sel-cd" onchange="filtrarEquipos()">
-        <option value="">Todos los CDs</option>
+    <div class="sel-title">Checklist de Seguridad</div>
+    <div class="sel-sub">Selecciona el equipo que vas a operar para iniciar la inspección pre-operacional CAR04-F17.</div>
+    <div id="sel-loading" class="loading-eq"><span class="spinner-sm"></span>Cargando equipos...</div>
+    <div id="sel-form" style="display:none;">
+      <label class="sel-label">Equipo (ID · CD)</label>
+      <select class="sel-select" id="eq-selector" onchange="onSelectEquipo()">
+        <option value="">-- Selecciona un equipo --</option>
       </select>
-    </div>
-
-    <div class="select-group">
-      <label>Equipo *</label>
-      <select class="equipo-select" id="sel-equipo" onchange="onEquipoChange()">
-        <option value="">— Selecciona el equipo —</option>
-      </select>
-      <div class="equipo-preview" id="equipo-preview">
-        <div class="ep-row"><span class="ep-key">Marca / Modelo</span><span class="ep-val" id="ep-modelo">—</span></div>
-        <div class="ep-row"><span class="ep-key">Capacidad</span><span class="ep-val" id="ep-cap">—</span></div>
-        <div class="ep-row"><span class="ep-key">Combustible</span><span class="ep-val" id="ep-comb">—</span></div>
-        <div class="ep-row"><span class="ep-key">Estado</span><span class="ep-val" id="ep-status">—</span></div>
+      <div class="eq-preview" id="eq-preview">
+        <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:6px;">Datos del equipo</div>
+        <div class="eq-prev-grid">
+          <div class="ep-f"><div class="ep-k">Marca / Modelo</div><div class="ep-v" id="prev-modelo">—</div></div>
+          <div class="ep-f"><div class="ep-k">Capacidad</div><div class="ep-v" id="prev-cap">—</div></div>
+          <div class="ep-f"><div class="ep-k">Combustible</div><div class="ep-v" id="prev-comb">—</div></div>
+          <div class="ep-f"><div class="ep-k">Estado</div><div class="ep-v" id="prev-status">—</div></div>
+        </div>
       </div>
+      <button class="btn-iniciar" id="btn-iniciar" onclick="iniciarChecklist()" disabled>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="9 11 12 14 22 4"/></svg>
+        Iniciar Inspección
+      </button>
     </div>
-
-    <button class="btn-iniciar" id="btn-iniciar" onclick="iniciarChecklist()" disabled>
-      Iniciar inspección →
-    </button>
   </div>
 </div>
 
-<!-- HEADER -->
-<div class="header" id="header">
+<!-- ═══ APP CHECKLIST ═══ -->
+<div id="app-wrap" style="display:none;">
+
+<div class="header">
   <div class="header-inner">
     <div class="logo">
       <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round">
@@ -218,12 +218,12 @@ select.fld{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.
     </div>
     <div>
       <div class="header-title">Checklist de Seguridad</div>
-      <div class="header-sub" id="hdr-sub">CAR04-F17 · Cargando...</div>
+      <div class="header-sub" id="hdr-sub">CAR04-F17</div>
     </div>
+    <a href="index.html" style="margin-left:auto;font-size:11px;color:var(--text3);text-decoration:none;">← Menú</a>
   </div>
 </div>
 
-<!-- STEPS -->
 <div class="steps" id="steps-wrap">
   <div class="step-dot active" id="sd0"></div>
   <div class="step-dot" id="sd1"></div>
@@ -231,7 +231,6 @@ select.fld{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.
   <div class="step-dot" id="sd3"></div>
 </div>
 
-<!-- PROGRESS (visible en páginas 1 y 2) -->
 <div class="prog-bar" id="prog-wrap" style="display:none;">
   <div class="prog-track"><div class="prog-fill" id="prog-fill" style="width:0%"></div></div>
   <div class="prog-stats">
@@ -242,536 +241,277 @@ select.fld{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.
   </div>
 </div>
 
-<!-- ══════════════════════════════════════
-     PAGE 0 — DATOS DEL OPERADOR Y EQUIPO
-═══════════════════════════════════════ -->
-<div class="page active" id="page-0">
-
-  <!-- UNIT INFO CARD (se llena desde QR params) -->
-  <div class="unit-card" id="unit-card">
+<!-- PAGE 0 -->
+<div class="page active main" id="page-0">
+  <div class="unit-card">
     <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:4px;">Equipo asignado</div>
     <div class="unit-placa" id="ui-placa">—</div>
     <div class="unit-info">
       <div class="unit-field"><div class="unit-field-lbl">Código PPTT</div><div class="unit-field-val" id="ui-codigo">—</div></div>
       <div class="unit-field"><div class="unit-field-lbl">Marca / Modelo</div><div class="unit-field-val" id="ui-modelo">—</div></div>
       <div class="unit-field"><div class="unit-field-lbl">Capacidad</div><div class="unit-field-val" id="ui-cap">—</div></div>
-      <div class="unit-field"><div class="unit-field-lbl">CD / Área</div><div class="unit-field-val" id="ui-cd">—</div></div>
+      <div class="unit-field"><div class="unit-field-lbl">CD</div><div class="unit-field-val" id="ui-cd">—</div></div>
     </div>
   </div>
-
-  <!-- AVISO SI YA HAY INSPECCIÓN HOY → ir a Sección 2 -->
   <div class="sec2-banner" id="sec2-banner">
     <div style="font-size:13px;font-weight:600;color:var(--accent);margin-bottom:4px;">✓ Este equipo ya fue inspeccionado hoy</div>
-    <div style="font-size:12px;color:var(--text2);margin-bottom:10px;">Solo debes registrar tu uso en la <strong>Sección 2</strong> sin repetir la inspección completa.</div>
-    <button onclick="irSeccion2()" style="background:var(--accent);color:white;border:none;border-radius:var(--r-sm);padding:8px 16px;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--sans);">Ir a Sección 2 →</button>
+    <div style="font-size:12px;color:var(--text2);margin-bottom:10px;">Solo registra tu uso en la <strong>Sección 2</strong>.</div>
+    <button onclick="irSec2()" style="background:var(--accent);color:white;border:none;border-radius:var(--r-sm);padding:8px 16px;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--sans);">Ir a Sección 2 →</button>
   </div>
-
   <div class="sect-lbl">Datos del operador</div>
-  <div class="fld-grp">
-    <label class="fld">Nombre completo *</label>
-    <input type="text" id="f-operador" class="fld" placeholder="Nombre y apellido" autocomplete="name">
-  </div>
+  <div class="fld-grp"><label class="fld">Nombre completo *</label><input type="text" id="f-operador" class="fld" placeholder="Nombre y apellido" autocomplete="name"></div>
   <div class="fld-row">
-    <div>
-      <label class="fld">Turno *</label>
-      <select id="f-turno" class="fld">
-        <option value="">Seleccionar...</option>
-        <option>Día</option>
-        <option>Noche</option>
-      </select>
-    </div>
-    <div>
-      <label class="fld">Horómetro inicial *</label>
-      <input type="number" id="f-horo-ini" class="fld" placeholder="hrs" inputmode="decimal" step="0.1">
-    </div>
+    <div><label class="fld">Turno *</label><select id="f-turno" class="fld"><option value="">Seleccionar...</option><option>Día</option><option>Noche</option></select></div>
+    <div><label class="fld">Horómetro inicial *</label><input type="number" id="f-horo-ini" class="fld" placeholder="hrs" inputmode="decimal" step="0.1"></div>
   </div>
-
   <div class="sect-lbl">Fuente de energía del vehículo</div>
   <div class="comb-grid">
     <button class="comb-btn" onclick="setComb('Eléctrico')">⚡ Eléctrico</button>
     <button class="comb-btn" onclick="setComb('GLP')">🔵 GLP</button>
     <button class="comb-btn" onclick="setComb('GNV')">🟢 GNV</button>
-    <button class="comb-btn" onclick="setComb('Gasolina')">🔴 Gasolina</button>
+    <button class="comb-btn" onclick="setComb('Gasolina')">🔴 Gasolina / Diesel</button>
   </div>
 </div>
 
-<!-- ══════════════════════════════════════
-     PAGE 1 — CHECKLIST PARTE 1
-═══════════════════════════════════════ -->
-<div class="page" id="page-1">
+<!-- PAGE 1 -->
+<div class="page main" id="page-1">
   <div class="block-banner" id="block-banner">
-    <div class="block-banner-icon">🚫</div>
-    <div>
-      <div class="block-banner-title">EQUIPO BLOQUEADO — No operar</div>
-      <div class="block-banner-sub" id="block-items-txt">Hay ítems CRÍTICOS en mal estado. El equipo no puede operar hasta levantar las observaciones.</div>
-    </div>
+    <div style="font-size:20px;flex-shrink:0;">🚫</div>
+    <div><div style="font-size:14px;font-weight:600;color:var(--red);">EQUIPO BLOQUEADO — No operar</div><div style="font-size:12px;color:var(--text2);margin-top:3px;" id="block-txt">Ítems críticos en mal estado.</div></div>
   </div>
-
-  <!-- Secciones 1-3 -->
-  <div id="secciones-parte1"></div>
+  <div id="secciones-p1"></div>
 </div>
 
-<!-- ══════════════════════════════════════
-     PAGE 2 — CHECKLIST PARTE 2
-═══════════════════════════════════════ -->
-<div class="page" id="page-2">
-  <!-- Secciones 4-5 + sección combustible según tipo -->
-  <div id="secciones-parte2"></div>
+<!-- PAGE 2 -->
+<div class="page main" id="page-2">
+  <div id="secciones-p2"></div>
 </div>
 
-<!-- ══════════════════════════════════════
-     PAGE 3 — FIRMA Y ENVÍO
-═══════════════════════════════════════ -->
-<div class="page" id="page-3">
-  <div class="sect-lbl">Resumen de la inspección</div>
+<!-- PAGE 3 -->
+<div class="page main" id="page-3">
+  <div class="sect-lbl">Resumen</div>
   <div style="background:var(--surf);border:1px solid var(--bord);border-radius:var(--r);padding:14px 16px;margin-bottom:14px;">
-    <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--bord);font-size:14px;">
-      <span style="color:var(--text2);">Total ítems</span><span id="sum-total" style="font-family:var(--mono);font-weight:500;">—</span>
-    </div>
-    <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--bord);font-size:14px;">
-      <span style="color:var(--text2);">En buen estado</span><span id="sum-bien" style="font-family:var(--mono);font-weight:600;color:var(--green);">—</span>
-    </div>
-    <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--bord);font-size:14px;">
-      <span style="color:var(--text2);">En mal estado</span><span id="sum-mal" style="font-family:var(--mono);font-weight:600;color:var(--red);">—</span>
-    </div>
-    <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--bord);font-size:14px;">
-      <span style="color:var(--text2);">No aplica</span><span id="sum-na" style="font-family:var(--mono);">—</span>
-    </div>
-    <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--bord);font-size:14px;">
-      <span style="color:var(--text2);">Ítems críticos (C) en mal estado</span><span id="sum-crit-mal" style="font-family:var(--mono);font-weight:700;color:var(--red);">—</span>
-    </div>
-    <div style="display:flex;justify-content:space-between;padding:8px 0;font-size:15px;font-weight:600;">
-      <span>Resultado</span><span id="sum-resultado">—</span>
-    </div>
+    <div class="sum-row"><span style="color:var(--text2)">Total ítems</span><span id="sum-total" style="font-family:var(--mono)">—</span></div>
+    <div class="sum-row"><span style="color:var(--text2)">En buen estado</span><span id="sum-bien" style="font-family:var(--mono);color:var(--green);font-weight:600">—</span></div>
+    <div class="sum-row"><span style="color:var(--text2)">En mal estado</span><span id="sum-mal" style="font-family:var(--mono);color:var(--red);font-weight:600">—</span></div>
+    <div class="sum-row"><span style="color:var(--text2)">No aplica</span><span id="sum-na" style="font-family:var(--mono)">—</span></div>
+    <div class="sum-row"><span style="color:var(--text2)">Críticos (C) fallados</span><span id="sum-crit" style="font-family:var(--mono);color:var(--red);font-weight:700">—</span></div>
+    <div class="sum-row" style="font-size:15px;font-weight:600;padding-top:8px;"><span>Resultado</span><span id="sum-res">—</span></div>
   </div>
-
-  <!-- Items críticos fallados -->
-  <div id="crit-list-wrap" style="display:none;">
+  <div id="crit-wrap" style="display:none;margin-bottom:14px;">
     <div class="sect-lbl">Ítems críticos fallados</div>
-    <div style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.25);border-radius:var(--r);padding:12px 14px;margin-bottom:14px;" id="crit-list"></div>
+    <div style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.25);border-radius:var(--r);padding:12px 14px;" id="crit-list"></div>
   </div>
-
-  <div class="fld-grp">
-    <label class="fld">Observaciones generales</label>
-    <textarea id="f-obs" class="fld" rows="3" placeholder="Defectos encontrados, condiciones especiales..." style="resize:none;"></textarea>
-  </div>
+  <div class="fld-grp"><label class="fld">Observaciones generales</label><textarea id="f-obs" class="fld" rows="3" placeholder="Defectos, condiciones especiales..." style="resize:none;"></textarea></div>
   <div class="sect-lbl">Firma del operador *</div>
-  <div class="sig-wrap">
-    <canvas id="sig-canvas" height="130"></canvas>
-    <button class="sig-clear" onclick="clearSig()">Borrar</button>
-  </div>
+  <div class="sig-wrap"><canvas id="sig-canvas" height="130"></canvas><button class="sig-clear" onclick="clearSig()">Borrar</button></div>
   <p style="font-size:11px;color:var(--text3);margin-top:6px;">Firma con el dedo en el recuadro</p>
 </div>
 
-<!-- ══════════════════════════════════════
-     PAGE 4 — ÉXITO / BLOQUEADO
-═══════════════════════════════════════ -->
-<div class="page" id="page-success">
-  <!-- APROBADO -->
-  <div class="success-screen" id="screen-ok" style="display:none;">
-    <div class="success-icon" style="background:rgba(16,185,129,0.15);border:2px solid var(--green);">
+<!-- PAGE 4 — RESULTADO -->
+<div class="page main" id="page-4">
+  <div class="result-screen" id="screen-ok" style="display:none;">
+    <div class="result-icon" style="background:rgba(16,185,129,0.15);border:2px solid var(--green);">
       <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
     </div>
-    <div class="success-title">✓ Inspección registrada</div>
-    <div class="success-sub" id="ok-sub">El equipo está OPERATIVO.<br>Guardado correctamente en el sistema.</div>
-    <div class="record-pill" id="ok-record">ID: #CHK-000000</div>
+    <div class="result-title">✓ Inspección registrada</div>
+    <div class="result-sub" id="ok-sub">Equipo OPERATIVO</div>
+    <div class="record-pill" id="ok-rec" style="color:var(--green)">ID: —</div>
     <button class="btn-nuevo" onclick="reiniciar()">Nueva inspección</button>
-    <button class="btn-turno" onclick="irSeccion2()">Registrar uso adicional (Secc. 2)</button>
+    <button class="btn-sec2" onclick="irSec2()">Registrar uso adicional (Secc. 2)</button>
   </div>
-  <!-- BLOQUEADO -->
-  <div class="blocked-screen" id="screen-block" style="display:none;">
-    <div class="success-icon" style="background:rgba(239,68,68,0.15);border:2px solid var(--red);">
+  <div class="result-screen" id="screen-block" style="display:none;">
+    <div class="result-icon" style="background:rgba(239,68,68,0.15);border:2px solid var(--red);">
       <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--red)" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
     </div>
-    <div class="success-title" style="color:var(--red);">🚫 EQUIPO BLOQUEADO</div>
-    <div class="success-sub" id="block-sub">Hay ítems CRÍTICOS en mal estado.<br>El equipo NO puede operar.</div>
-    <div class="record-pill" id="block-record" style="color:var(--red);">ID: #CHK-000000</div>
-    <a id="wsp-link" href="#" class="wsp-btn" target="_blank">
+    <div class="result-title" style="color:var(--red);">🚫 EQUIPO BLOQUEADO</div>
+    <div class="result-sub" id="blk-sub">Ítems críticos fallados</div>
+    <div class="record-pill" id="blk-rec" style="color:var(--red)">ID: —</div>
+    <a id="wsp-btn" href="#" class="wsp-btn" target="_blank">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
       Notificar supervisor por WhatsApp
     </a>
-    <button class="btn-nuevo" onclick="reiniciar()" style="background:var(--surf2);color:var(--text);border:1px solid var(--bord2);margin-top:4px;">Volver al inicio</button>
+    <button class="btn-nuevo" style="background:var(--surf2);color:var(--text);border:1px solid var(--bord2);" onclick="reiniciar()">Volver al inicio</button>
   </div>
 </div>
 
-<!-- ══════════════════════════════════════
-     PAGE 5 — SECCIÓN 2 (uso adicional)
-═══════════════════════════════════════ -->
-<div class="page" id="page-sec2">
+<!-- PAGE 5 — SECCIÓN 2 -->
+<div class="page main" id="page-5">
   <div style="background:rgba(37,99,235,0.08);border:1px solid rgba(37,99,235,0.25);border-radius:var(--r);padding:12px 14px;margin-bottom:16px;">
     <div style="font-size:13px;font-weight:600;color:var(--accent);">Sección 2 — Registro de uso durante el turno</div>
-    <div style="font-size:12px;color:var(--text2);margin-top:3px;">Declaro inspeccionar adecuadamente el vehículo considerando los criterios de la Sección 1.</div>
+    <div style="font-size:12px;color:var(--text2);margin-top:3px;">Declaro haber inspeccionado el vehículo conforme a la Sección 1.</div>
   </div>
-  <div class="fld-grp">
-    <label class="fld">Nombre del operador *</label>
-    <input type="text" id="s2-operador" class="fld" placeholder="Nombre y apellido" autocomplete="name">
+  <div class="fld-grp"><label class="fld">Nombre del operador *</label><input type="text" id="s2-op" class="fld" placeholder="Nombre y apellido" autocomplete="name"></div>
+  <div class="fld-row">
+    <div><label class="fld">Área</label><input type="text" id="s2-area" class="fld" placeholder="Área de trabajo"></div>
+    <div><label class="fld">Actividad</label><input type="text" id="s2-act" class="fld" placeholder="Descripción"></div>
   </div>
   <div class="fld-row">
-    <div>
-      <label class="fld">Área</label>
-      <input type="text" id="s2-area" class="fld" placeholder="Área de trabajo">
-    </div>
-    <div>
-      <label class="fld">Actividad</label>
-      <input type="text" id="s2-actividad" class="fld" placeholder="Descripción">
-    </div>
+    <div><label class="fld">Hora inicio</label><input type="time" id="s2-hi" class="fld"></div>
+    <div><label class="fld">Hora fin</label><input type="time" id="s2-hf" class="fld"></div>
   </div>
   <div class="fld-row">
-    <div>
-      <label class="fld">Hora inicio</label>
-      <input type="time" id="s2-hinicio" class="fld">
-    </div>
-    <div>
-      <label class="fld">Hora fin</label>
-      <input type="time" id="s2-hfin" class="fld">
-    </div>
-  </div>
-  <div class="fld-row">
-    <div>
-      <label class="fld">Horómetro inicial</label>
-      <input type="number" id="s2-horo-ini" class="fld" placeholder="hrs" inputmode="decimal" step="0.1">
-    </div>
-    <div>
-      <label class="fld">Horómetro final</label>
-      <input type="number" id="s2-horo-fin" class="fld" placeholder="hrs" inputmode="decimal" step="0.1">
-    </div>
+    <div><label class="fld">Horómetro inicial</label><input type="number" id="s2-hoi" class="fld" placeholder="hrs" inputmode="decimal" step="0.1"></div>
+    <div><label class="fld">Horómetro final</label><input type="number" id="s2-hof" class="fld" placeholder="hrs" inputmode="decimal" step="0.1"></div>
   </div>
   <div class="fld-grp">
     <label class="fld">¿Cuenta con AST/PTS?</label>
-    <select id="s2-ast" class="fld">
-      <option value="SI">SI</option>
-      <option value="N.A">N.A</option>
-    </select>
+    <select id="s2-ast" class="fld"><option value="SI">SI</option><option value="N.A">N.A</option></select>
   </div>
-  <div class="fld-grp">
-    <label class="fld">Observaciones identificadas</label>
-    <textarea id="s2-obs" class="fld" rows="2" placeholder="Condiciones inseguras observadas durante el uso..." style="resize:none;"></textarea>
-  </div>
+  <div class="fld-grp"><label class="fld">Observaciones identificadas</label><textarea id="s2-obs" class="fld" rows="2" placeholder="Condiciones inseguras observadas..." style="resize:none;"></textarea></div>
   <div class="sect-lbl">Firma *</div>
-  <div class="sig-wrap">
-    <canvas id="sig2-canvas" height="110"></canvas>
-    <button class="sig-clear" onclick="clearSig2()">Borrar</button>
-  </div>
+  <div class="sig-wrap"><canvas id="sig2-canvas" height="110"></canvas><button class="sig-clear" onclick="clearSig2()">Borrar</button></div>
 </div>
 
-<!-- BOTTOM NAV -->
 <div class="bottom-nav" id="bottom-nav">
   <button class="btn btn-ghost" id="btn-back" onclick="goBack()" style="display:none;">← Atrás</button>
   <button class="btn btn-primary" id="btn-next" onclick="goNext()">Continuar →</button>
 </div>
 
+</div><!-- end app-wrap -->
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script>
-const SUPA_URL='https://njmswjinwrcxsfduchsc.supabase.co';
-const SUPA_KEY='sb_publishable_KKD-gJzg0Urws7ff-h5XFg_91sL146J';
-const sb=supabase.createClient(SUPA_URL,SUPA_KEY);
+const SUPA_URL = 'https://njmswjinwrcxsfduchsc.supabase.co';
+const SUPA_KEY = 'sb_publishable_KKD-gJzg0Urws7ff-h5XFg_91sL146J';
+const sb = supabase.createClient(SUPA_URL, SUPA_KEY);
 
-// ─── DATOS DEL CHECKLIST ────────────────────────────────────
+// ── PARÁMETROS URL ────────────────────────────────────────
+function gp(k){ return new URLSearchParams(window.location.search).get(k)||''; }
+const UNIT = { placa:gp('placa'), codigo:gp('codigo'), marca:gp('marca'), modelo:gp('modelo'), cap:gp('cap'), cd:gp('cd'), comb:gp('comb') };
+
+// ── SECCIONES CHECKLIST ───────────────────────────────────
 const SECCIONES = [
-  {id:'limpieza',nombre:'Condiciones de Limpieza',color:'rgba(96,165,250,0.12)',stroke:'#60a5fa',parte:1,
-   items:[
+  {id:'limpieza',nombre:'Condiciones de Limpieza',color:'rgba(96,165,250,0.12)',stroke:'#60a5fa',parte:1,items:[
     {id:'L01',txt:'La cabina se encuentra limpia y en buen estado',crit:'NC'},
-    {id:'L02',txt:'Los acoples de mangueras se encuentran limpios, libres de polvo, grasa y oxido',crit:'NC'},
+    {id:'L02',txt:'Los acoples de mangueras están limpios, libres de polvo, grasa y oxido',crit:'NC'},
   ]},
-  {id:'compartimiento',nombre:'Dentro del Compartimiento',color:'rgba(245,158,11,0.1)',stroke:'#fbbf24',parte:1,
-   items:[
-    {id:'C01',txt:'Conexiones eléctricas en buen estado, sin cable (cobre) expuesto',crit:'C'},
+  {id:'compartimiento',nombre:'Dentro del Compartimiento',color:'rgba(245,158,11,0.1)',stroke:'#fbbf24',parte:1,items:[
+    {id:'C01',txt:'Conexiones eléctricas en buen estado, sin cable expuesto',crit:'C'},
     {id:'C02',txt:'Motor no presenta ruidos anómalos',crit:'NC'},
     {id:'C03',txt:'Nivel de Aceite del Motor (si aplica)',crit:'C'},
     {id:'C04',txt:'Nivel de Aceite Hidráulico (Hidrolina)',crit:'C'},
     {id:'C05',txt:'Nivel del Agua de Batería',crit:'NC'},
     {id:'C06',txt:'Nivel del Agua/refrigerante del Radiador',crit:'C'},
   ]},
-  {id:'exterior',nombre:'Fuera del Vehículo',color:'rgba(16,185,129,0.1)',stroke:'#34d399',parte:1,
-   items:[
+  {id:'exterior',nombre:'Fuera del Vehículo',color:'rgba(16,185,129,0.1)',stroke:'#34d399',parte:1,items:[
     {id:'E01',txt:'Estado de la Carrocería (libre de golpes)',crit:'NC'},
     {id:'E02',txt:'Guarda de Protección Superior (jaula/cabina)',crit:'C'},
     {id:'E03',txt:'Cadenas del mástil lubricadas y limpias',crit:'NC'},
-    {id:'E04',txt:'Horquillas en buen estado (Sin rajaduras, sin corrosión excesiva)',crit:'C'},
-    {id:'E05',txt:'Extensiones de horquilla (uñas) y seguro de sujeción en buen estado',crit:'C'},
-    {id:'E06',txt:'Sistema de levantamiento y descenso (mangueras y pistones) sin fugas',crit:'C'},
+    {id:'E04',txt:'Horquillas en buen estado (sin rajaduras ni corrosión)',crit:'C'},
+    {id:'E05',txt:'Extensiones de horquilla y seguro de sujeción en buen estado',crit:'C'},
+    {id:'E06',txt:'Sistema de levantamiento/descenso (mangueras y pistones) sin fugas',crit:'C'},
     {id:'E07',txt:'Sistema de girado de uñas (en caso aplique)',crit:'NC'},
     {id:'E08',txt:'Luces operativas (Delanteras, Posteriores, direccionales y circulina)',crit:'C'},
-    {id:'E09',txt:'Llantas en buen estado (con presencia de cocadas)',crit:'C'},
+    {id:'E09',txt:'Llantas en buen estado (con cocadas)',crit:'C'},
     {id:'E10',txt:'Placa de Capacidad de Carga',crit:'NC'},
   ]},
-  {id:'seguridad',nombre:'Accesorios de Seguridad',color:'rgba(239,68,68,0.08)',stroke:'#f87171',parte:2,
-   items:[
+  {id:'seguridad',nombre:'Accesorios de Seguridad',color:'rgba(239,68,68,0.08)',stroke:'#f87171',parte:2,items:[
     {id:'S01',txt:'Alarma y luz de Retroceso',crit:'C'},
     {id:'S02',txt:'Circulina',crit:'NC'},
-    {id:'S03',txt:'Claxon se encuentra operativo',crit:'C'},
+    {id:'S03',txt:'Claxon operativo',crit:'C'},
     {id:'S04',txt:'Avisos de Advertencia (puntos ciegos) y cintas reflectivas',crit:'NC'},
     {id:'S05',txt:'Control de límite de velocidad operativo (en caso aplique)',crit:'NC'},
     {id:'S06',txt:'Cinturón de seguridad en buen estado y engancha adecuadamente',crit:'C'},
-    {id:'S07',txt:'Sensor de presencia de hombre operativo (Asiento y/o cinturón)',crit:'C'},
+    {id:'S07',txt:'Sensor de presencia de hombre operativo (asiento y/o cinturón)',crit:'C'},
     {id:'S08',txt:'Extintor de mano (PQS 2 kg)',crit:'NC'},
     {id:'S09',txt:'Triángulo o Cono de seguridad',crit:'NC'},
     {id:'S10',txt:'Kit Antiderrame',crit:'NC'},
   ]},
-  {id:'cabina',nombre:'Dentro de la Cabina',color:'rgba(139,92,246,0.1)',stroke:'#a78bfa',parte:2,
-   items:[
+  {id:'cabina',nombre:'Dentro de la Cabina',color:'rgba(139,92,246,0.1)',stroke:'#a78bfa',parte:2,items:[
     {id:'CA01',txt:'Panel de control operativo y sin alarmas',crit:'C'},
-    {id:'CA02',txt:'Sistema de dirección en buen estado (Operatividad de Timón)',crit:'C'},
+    {id:'CA02',txt:'Sistema de dirección en buen estado (Timón)',crit:'C'},
     {id:'CA03',txt:'Frenos de Pedal',crit:'C'},
     {id:'CA04',txt:'Freno de mano',crit:'C'},
     {id:'CA05',txt:'Horómetro',crit:'NC'},
     {id:'CA06',txt:'Palancas de Control de Horquillas',crit:'C'},
-    {id:'CA07',txt:'Espejos completos y en buen estado (Laterales / retrovisor)',crit:'C'},
+    {id:'CA07',txt:'Espejos completos y en buen estado',crit:'C'},
   ]},
-  // Combustible — se muestran según tipo seleccionado
-  {id:'glp',nombre:'Montacargas Gas (GLP/GNV)',color:'rgba(59,130,246,0.1)',stroke:'#60a5fa',parte:2,comb:['GLP','GNV'],
-   items:[
+  {id:'glp',nombre:'Montacargas Gas (GLP/GNV)',color:'rgba(59,130,246,0.1)',stroke:'#60a5fa',parte:2,comb:['GLP','GNV'],items:[
     {id:'G01',txt:'Mangueras, tapas y válvulas del sistema GLP/GNV en buen estado',crit:'C'},
-    {id:'G02',txt:'Tanque de combustible (GLP, GNV) en buen estado y rotulado (NFPA)',crit:'C'},
+    {id:'G02',txt:'Tanque de combustible en buen estado y rotulado (NFPA)',crit:'C'},
     {id:'G03',txt:'Nivel de combustible mayor al 50%',crit:'C'},
   ]},
-  {id:'gasolina',nombre:'Montacargas Gasolina/Diesel',color:'rgba(245,158,11,0.1)',stroke:'#fbbf24',parte:2,comb:['Gasolina','Diesel'],
-   items:[
+  {id:'gasolina',nombre:'Montacargas Gasolina/Diesel',color:'rgba(245,158,11,0.1)',stroke:'#fbbf24',parte:2,comb:['Gasolina','Diesel'],items:[
     {id:'GS01',txt:'Mangueras, tapas y válvulas en buen estado',crit:'C'},
     {id:'GS02',txt:'Tanque de combustible en buen estado',crit:'C'},
     {id:'GS03',txt:'Nivel de Combustible mayor al 50%',crit:'C'},
   ]},
-  {id:'electrico_sec',nombre:'Montacargas Eléctrico',color:'rgba(16,185,129,0.1)',stroke:'#34d399',parte:2,comb:['Eléctrico'],
-   items:[
+  {id:'electrico_s',nombre:'Montacargas Eléctrico',color:'rgba(16,185,129,0.1)',stroke:'#34d399',parte:2,comb:['Eléctrico'],items:[
     {id:'EL01',txt:'Sistema de carga de batería (Cargador, conectores) en buen estado',crit:'C'},
     {id:'EL02',txt:'Nivel de agua de baterías dentro del rango permitido',crit:'C'},
-    {id:'EL03',txt:'Nivel de carga de batería del equipo mayor al 50%',crit:'C'},
+    {id:'EL03',txt:'Nivel de carga de batería mayor al 50%',crit:'C'},
   ]},
 ];
 
-// ─── STATE ──────────────────────────────────────────────────
-const UNIT = {
-  placa:    getP('placa')  || '',
-  codigo:   getP('codigo') || '',
-  marca:    getP('marca')  || '',
-  modelo:   getP('modelo') || '',
-  cap:      getP('cap')    || '',
-  cd:       getP('cd')     || '',
-  comb:     getP('comb')   || '',
-};
-const estado = {};  // item_id -> {val, obs, tarjeta_roja}
+// ── STATE ─────────────────────────────────────────────────
+const estado = {};
 let combSelec = UNIT.comb || null;
 let currentPage = 0;
-let sigCtx, sigCanvas, sig2Ctx, sig2Canvas, hasSig=false, hasSig2=false;
+let sigCanvas, sigCtx, sig2Canvas, sig2Ctx;
+let hasSig=false, hasSig2=false;
 let isDrawing=false, lastX=0, lastY=0;
-let inspeccionIdHoy = null;  // si ya hay inspección hoy
-let recordId = null;
-let supWsp = ''; // número supervisor para WhatsApp
+let inspeccionIdHoy=null, recordId=null;
+let equiposSB=[];
 
-function getP(k){ return new URLSearchParams(window.location.search).get(k)||''; }
+// ── INIT ──────────────────────────────────────────────────
+window.addEventListener('DOMContentLoaded', async () => {
 
-// ── SELECTOR DE EQUIPO ────────────────────────────────────
-let equiposSB = [];
-
-async function mostrarSelector(){
-  // Ocultar app, mostrar selector
-  document.getElementById('selector-screen').style.display = 'block';
-  document.getElementById('steps-wrap').style.display      = 'none';
-  document.getElementById('bottom-nav').style.display      = 'none';
-  document.getElementById('prog-wrap').style.display       = 'none';
-  sync(true);
-
-  try {
-    const { data, error } = await sb
-      .from('equipos')
-      .select('id,codigo,placa,marca,modelo,capacidad,combustible,cd,status')
-      .order('cd').order('id');
-    if(error) throw error;
-    equiposSB = data;
-
-    const sel = document.getElementById('eq-selector');
-    sel.innerHTML = '<option value="">-- Selecciona un equipo --</option>';
-
-    // Agrupar por CD
-    const porCD = {};
-    data.forEach(e => {
-      if(!porCD[e.cd]) porCD[e.cd] = [];
-      porCD[e.cd].push(e);
-    });
-
-    Object.keys(porCD).sort().forEach(cd => {
-      const grp = document.createElement('optgroup');
-      grp.label = cd;
-      porCD[cd].forEach(e => {
-        const id    = e.codigo || e.placa || e.id;
-        const label = `${id}  ·  ${cd}`;
-        const opt   = document.createElement('option');
-        opt.value       = e.id;
-        opt.textContent = label;
-        if(e.status === 'Inoperativo' || e.status === 'En proceso de baja'){
-          opt.textContent += '  ⚠';
-          opt.style.color = '#f59e0b';
-        }
-        grp.appendChild(opt);
-      });
-      sel.appendChild(grp);
-    });
-
-  } catch(err) {
-    document.getElementById('eq-selector').innerHTML =
-      '<option value="">Error cargando equipos — reintenta</option>';
-    showToastMsg('Error conectando a Supabase: ' + err.message);
+  // ¿Viene con parámetros de QR?
+  if (UNIT.placa || UNIT.codigo) {
+    // Modo QR / directo
+    mostrarApp();
+    initApp();
+  } else {
+    // Modo menú → mostrar selector
+    mostrarSelector();
+    await cargarEquipos();
   }
-  sync(false);
+});
+
+function mostrarApp() {
+  document.getElementById('selector-wrap').style.display = 'none';
+  document.getElementById('app-wrap').style.display      = 'block';
 }
 
-function onSelectEquipo(){
-  const id  = document.getElementById('eq-selector').value;
-  const btn = document.getElementById('btn-iniciar');
-  const prev = document.getElementById('eq-preview');
-
-  if(!id){ btn.disabled=true; prev.classList.remove('show'); return; }
-
-  const eq = equiposSB.find(e => e.id === id);
-  if(!eq){ btn.disabled=true; return; }
-
-  // Mostrar preview
-  document.getElementById('prev-modelo').textContent  = [eq.marca,eq.modelo].filter(Boolean).join(' ') || '—';
-  document.getElementById('prev-cap').textContent      = eq.capacidad ? eq.capacidad + ' TM' : '—';
-  document.getElementById('prev-comb').textContent     = eq.combustible || '—';
-  document.getElementById('prev-status').textContent   = eq.status || '—';
-  document.getElementById('prev-status').style.color   =
-    eq.status==='Operativo' ? 'var(--green)' :
-    eq.status==='Inoperativo' ? 'var(--red)' : 'var(--amber)';
-  prev.classList.add('show');
-  btn.disabled = false;
+function mostrarSelector() {
+  document.getElementById('selector-wrap').style.display = 'block';
+  document.getElementById('app-wrap').style.display      = 'none';
 }
 
-function iniciarChecklist(){
-  const id = document.getElementById('eq-selector').value;
-  const eq = equiposSB.find(e => e.id === id);
-  if(!eq) return;
-
-  // Redirigir con parámetros del equipo seleccionado
-  const params = new URLSearchParams({
-    placa:  eq.placa  || eq.codigo || eq.id,
-    codigo: eq.codigo || eq.id,
-    marca:  eq.marca  || '',
-    modelo: eq.modelo || '',
-    cap:    eq.capacidad || '',
-    cd:     eq.cd     || '',
-    comb:   eq.combustible || '',
-  });
-  window.location.href = 'checklist.html?' + params.toString();
-}
-
-// ─── INIT ───────────────────────────────────────────────────
-// ── SELECT SCREEN ───────────────────────────────────────
-let equiposBD = [];
-let equipoSeleccionado = null;
-
-async function cargarEquiposSelect(){
-  try{
-    const{data,error}=await sb.from('equipos')
-      .select('id,codigo,placa,cd,marca,modelo,capacidad,combustible,status')
-      .order('cd').order('id');
-    if(error) throw error;
-    equiposBD = data;
-
-    // Poblar filtro CD
-    const cds=[...new Set(data.map(e=>e.cd).filter(Boolean))].sort();
-    const selCd=document.getElementById('sel-cd');
-    selCd.innerHTML='<option value="">Todos los CDs</option>'+
-      cds.map(cd=>`<option value="${cd}">${cd}</option>`).join('');
-
-    filtrarEquipos();
-
-    document.getElementById('sel-db-dot').className='db-dot ok';
-    document.getElementById('sel-db-txt').textContent=data.length+' equipos cargados';
-    document.getElementById('sel-db-txt').style.color='var(--green)';
-  }catch(err){
-    document.getElementById('sel-db-dot').className='db-dot err';
-    document.getElementById('sel-db-txt').textContent='Error al cargar';
-    document.getElementById('sel-db-txt').style.color='var(--red)';
-  }
-}
-
-function filtrarEquipos(){
-  const cd=document.getElementById('sel-cd').value;
-  const filtered=cd?equiposBD.filter(e=>e.cd===cd):equiposBD;
-  const sel=document.getElementById('sel-equipo');
-  sel.innerHTML='<option value="">— Selecciona el equipo —</option>'+
-    filtered.map(e=>{
-      const label=(e.codigo&&e.codigo.trim())?e.codigo.trim():(e.placa||e.id);
-      const planta=e.cd?` · ${e.cd}`:'';
-      return `<option value="${e.id}">${label}${planta}</option>`;
-    }).join('');
-  onEquipoChange();
-}
-
-function onEquipoChange(){
-  const id=document.getElementById('sel-equipo').value;
-  const prev=document.getElementById('equipo-preview');
-  const btn=document.getElementById('btn-iniciar');
-  if(!id){prev.classList.remove('show');btn.disabled=true;equipoSeleccionado=null;return;}
-  equipoSeleccionado=equiposBD.find(e=>e.id===id);
-  if(!equipoSeleccionado){prev.classList.remove('show');btn.disabled=true;return;}
-  const e=equipoSeleccionado;
-  document.getElementById('ep-modelo').textContent=[e.marca,e.modelo].filter(Boolean).join(' ')||'—';
-  document.getElementById('ep-cap').textContent=e.capacidad?e.capacidad+' TM':'—';
-  document.getElementById('ep-comb').textContent=e.combustible||'—';
-  const st=document.getElementById('ep-status');
-  st.textContent=e.status||'—';
-  st.style.color=e.status==='Operativo'?'var(--green)':e.status==='Inoperativo'?'var(--red)':'var(--amber)';
-  prev.classList.add('show');
-  btn.disabled=false;
-}
-
-function iniciarChecklist(){
-  if(!equipoSeleccionado) return;
-  const e=equipoSeleccionado;
-  const label=(e.codigo&&e.codigo.trim())?e.codigo.trim():(e.placa||e.id);
-  // Setear UNIT con datos del equipo seleccionado
-  UNIT.placa   = e.placa  || label;
-  UNIT.codigo  = e.codigo || label;
-  UNIT.marca   = e.marca  || '';
-  UNIT.modelo  = e.modelo || '';
-  UNIT.cap     = e.capacidad || '';
-  UNIT.cd      = e.cd     || '';
-  UNIT.comb    = e.combustible || '';
-  document.getElementById('select-screen').style.display='none';
-  iniciarApp();
-}
-
-async function iniciarApp(){
-  // ── Si viene sin placa → mostrar selector ──────────────
-  if(!UNIT.placa && !UNIT.codigo){
-    await mostrarSelector();
-    return;
-  }
-
-  // UI unidad
-  document.getElementById('ui-placa').textContent  = UNIT.placa  || '—';
+async function initApp() {
+  // Llenar datos unidad
+  document.getElementById('ui-placa').textContent  = UNIT.placa  || UNIT.codigo || '—';
   document.getElementById('ui-codigo').textContent = UNIT.codigo || '—';
-  document.getElementById('ui-modelo').textContent = [UNIT.marca,UNIT.modelo].filter(Boolean).join(' ') || '—';
+  document.getElementById('ui-modelo').textContent = [UNIT.marca, UNIT.modelo].filter(Boolean).join(' ') || '—';
   document.getElementById('ui-cap').textContent    = UNIT.cap    || '—';
   document.getElementById('ui-cd').textContent     = UNIT.cd     || '—';
-  document.getElementById('hdr-sub').textContent   = `CAR04-F17 · ${new Date().toLocaleDateString('es-PE',{day:'2-digit',month:'short',year:'numeric'})}`;
+  document.getElementById('hdr-sub').textContent   = 'CAR04-F17 · ' + new Date().toLocaleDateString('es-PE',{day:'2-digit',month:'short',year:'numeric'});
 
-  if(UNIT.comb) setComb(UNIT.comb);
+  if (UNIT.comb) setComb(UNIT.comb);
 
-  // Inicializar ítems
-  SECCIONES.forEach(sec=>sec.items.forEach(i=>estado[i.id]={val:null,obs:''}));
-
-  // Renderizar secciones
+  // Init estado items
+  SECCIONES.forEach(s => s.items.forEach(i => estado[i.id] = {val:null, obs:''}));
   renderSecciones();
 
-  // Firma canvas
-  sigCanvas = document.getElementById('sig-canvas');
+  // Canvas firma
+  sigCanvas  = document.getElementById('sig-canvas');
   sigCanvas.width = Math.min(window.innerWidth-40, 560);
-  sigCtx = initSig(sigCanvas, (v)=>hasSig=v);
+  sigCtx = initSig(sigCanvas, v => hasSig = v);
 
   sig2Canvas = document.getElementById('sig2-canvas');
   sig2Canvas.width = Math.min(window.innerWidth-40, 560);
-  sig2Ctx = initSig(sig2Canvas, (v)=>hasSig2=v);
+  sig2Ctx = initSig(sig2Canvas, v => hasSig2 = v);
 
-  // Verificar si ya hay inspección hoy
-  if(UNIT.placa){
+  // Verificar inspección de hoy
+  if (UNIT.placa || UNIT.codigo) {
     const hoy = new Date().toISOString().split('T')[0];
-    const{data}=await sb.from('checklist_inspeccion').select('id,record_id').eq('placa',UNIT.placa).eq('fecha',hoy).limit(1);
-    if(data&&data.length>0){
+    const placa = UNIT.placa || UNIT.codigo;
+    const { data } = await sb.from('checklist_inspeccion')
+      .select('id,record_id').eq('placa', placa).eq('fecha', hoy).limit(1);
+    if (data && data.length > 0) {
       inspeccionIdHoy = data[0].id;
-      recordId = data[0].record_id;
+      recordId        = data[0].record_id;
       document.getElementById('sec2-banner').classList.add('show');
     }
   }
@@ -779,78 +519,127 @@ async function iniciarApp(){
   renderPage(0);
 }
 
-// ── INIT ─────────────────────────────────────────────────
-  // Si no hay placa → mostrar select screen
-  if(!UNIT.placa && !UNIT.codigo){
-    document.getElementById('select-screen').style.display='flex';
-    document.getElementById('header').style.display='none';
-    document.getElementById('steps-wrap').style.display='none';
-    document.getElementById('bottom-nav').style.display='none';
-    cargarEquiposSelect();
-  } else {
-    iniciarApp();
-  }
-});
+// ── SELECTOR ──────────────────────────────────────────────
+async function cargarEquipos() {
+  try {
+    const { data, error } = await sb
+      .from('equipos')
+      .select('id,codigo,placa,marca,modelo,capacidad,combustible,cd,status')
+      .order('cd').order('id');
+    if (error) throw error;
+    equiposSB = data;
 
-// ─── FIRMA HELPER ───────────────────────────────────────────
-function initSig(canvas, onDraw){
+    const sel = document.getElementById('eq-selector');
+    sel.innerHTML = '<option value="">-- Selecciona un equipo --</option>';
+
+    const porCD = {};
+    data.forEach(e => { if(!porCD[e.cd]) porCD[e.cd]=[]; porCD[e.cd].push(e); });
+    Object.keys(porCD).sort().forEach(cd => {
+      const grp = document.createElement('optgroup');
+      grp.label = cd;
+      porCD[cd].forEach(e => {
+        const id  = e.codigo || e.placa || e.id;
+        const opt = document.createElement('option');
+        opt.value       = e.id;
+        opt.textContent = id + '  ·  ' + cd + (e.status !== 'Operativo' ? '  ⚠' : '');
+        grp.appendChild(opt);
+      });
+      sel.appendChild(grp);
+    });
+
+    document.getElementById('sel-loading').style.display = 'none';
+    document.getElementById('sel-form').style.display    = 'block';
+
+  } catch(err) {
+    document.getElementById('sel-loading').innerHTML = '❌ Error cargando equipos. Verifica tu conexión.';
+  }
+}
+
+function onSelectEquipo() {
+  const id   = document.getElementById('eq-selector').value;
+  const btn  = document.getElementById('btn-iniciar');
+  const prev = document.getElementById('eq-preview');
+  if (!id) { btn.disabled=true; prev.classList.remove('show'); return; }
+  const eq = equiposSB.find(e => e.id === id);
+  if (!eq) return;
+  document.getElementById('prev-modelo').textContent = [eq.marca,eq.modelo].filter(Boolean).join(' ')||'—';
+  document.getElementById('prev-cap').textContent    = eq.capacidad ? eq.capacidad+' TM' : '—';
+  document.getElementById('prev-comb').textContent   = eq.combustible || '—';
+  const stEl = document.getElementById('prev-status');
+  stEl.textContent = eq.status || '—';
+  stEl.style.color = eq.status==='Operativo'?'var(--green)':eq.status==='Inoperativo'?'var(--red)':'var(--amber)';
+  prev.classList.add('show');
+  btn.disabled = false;
+}
+
+function iniciarChecklist() {
+  const id = document.getElementById('eq-selector').value;
+  const eq = equiposSB.find(e => e.id === id);
+  if (!eq) return;
+  const p = new URLSearchParams({
+    placa:  eq.placa  || eq.codigo || eq.id,
+    codigo: eq.codigo || eq.id,
+    marca:  eq.marca  || '',
+    modelo: eq.modelo || '',
+    cap:    eq.capacidad || '',
+    cd:     eq.cd || '',
+    comb:   eq.combustible || '',
+  });
+  window.location.href = 'checklist.html?' + p.toString();
+}
+
+// ── FIRMA ─────────────────────────────────────────────────
+function initSig(canvas, cb) {
   const ctx = canvas.getContext('2d');
   ctx.strokeStyle='#00c896'; ctx.lineWidth=2.5; ctx.lineCap='round'; ctx.lineJoin='round';
+  const draw = (x,y) => { ctx.beginPath();ctx.moveTo(lastX,lastY);ctx.lineTo(x,y);ctx.stroke();lastX=x;lastY=y;cb(true); };
   canvas.addEventListener('mousedown',e=>{isDrawing=true;const r=canvas.getBoundingClientRect();lastX=e.clientX-r.left;lastY=e.clientY-r.top;});
-  canvas.addEventListener('mousemove',e=>{if(!isDrawing)return;const r=canvas.getBoundingClientRect();const x=e.clientX-r.left,y=e.clientY-r.top;ctx.beginPath();ctx.moveTo(lastX,lastY);ctx.lineTo(x,y);ctx.stroke();lastX=x;lastY=y;onDraw(true);});
+  canvas.addEventListener('mousemove',e=>{if(isDrawing){const r=canvas.getBoundingClientRect();draw(e.clientX-r.left,e.clientY-r.top);}});
   canvas.addEventListener('mouseup',()=>isDrawing=false);
   canvas.addEventListener('touchstart',e=>{e.preventDefault();const t=e.touches[0],r=canvas.getBoundingClientRect();lastX=t.clientX-r.left;lastY=t.clientY-r.top;isDrawing=true;},{passive:false});
-  canvas.addEventListener('touchmove',e=>{e.preventDefault();if(!isDrawing)return;const t=e.touches[0],r=canvas.getBoundingClientRect();const x=t.clientX-r.left,y=t.clientY-r.top;ctx.beginPath();ctx.moveTo(lastX,lastY);ctx.lineTo(x,y);ctx.stroke();lastX=x;lastY=y;onDraw(true);},{passive:false});
+  canvas.addEventListener('touchmove',e=>{e.preventDefault();if(isDrawing){const t=e.touches[0],r=canvas.getBoundingClientRect();draw(t.clientX-r.left,t.clientY-r.top);}},{passive:false});
   canvas.addEventListener('touchend',()=>isDrawing=false);
   return ctx;
 }
 function clearSig(){sigCtx.clearRect(0,0,sigCanvas.width,sigCanvas.height);hasSig=false;}
 function clearSig2(){sig2Ctx.clearRect(0,0,sig2Canvas.width,sig2Canvas.height);hasSig2=false;}
 
-// ─── RENDER SECCIONES ───────────────────────────────────────
-function renderSecciones(){
-  const p1 = document.getElementById('secciones-parte1');
-  const p2 = document.getElementById('secciones-parte2');
-  p1.innerHTML=''; p2.innerHTML='';
-  SECCIONES.forEach(sec=>{
-    // Filtrar secciones de combustible según selección
-    if(sec.comb && (!combSelec || !sec.comb.includes(combSelec))) return;
-    const el = buildSeccion(sec);
-    if(sec.parte===1) p1.appendChild(el);
-    else p2.appendChild(el);
+// ── RENDER ────────────────────────────────────────────────
+function renderSecciones() {
+  const p1 = document.getElementById('secciones-p1');
+  const p2 = document.getElementById('secciones-p2');
+  p1.innerHTML = ''; p2.innerHTML = '';
+  SECCIONES.forEach(sec => {
+    if (sec.comb && (!combSelec || !sec.comb.includes(combSelec))) return;
+    const el = buildSec(sec);
+    (sec.parte===1 ? p1 : p2).appendChild(el);
   });
 }
 
-function buildSeccion(sec){
+function buildSec(sec) {
   const div = document.createElement('div');
-  div.className = 'check-section open';
-  div.id = 'sec-'+sec.id;
-
-  const cnt = sec.items.filter(i=>estado[i.id]?.val!==null).length;
-  div.innerHTML = `
-    <div class="check-sec-header" onclick="toggleSec('${sec.id}')">
-      <div class="check-sec-icon" style="background:${sec.color};">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="${sec.stroke}" stroke-width="2" stroke-linecap="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
-      </div>
-      <div class="check-sec-name">${sec.nombre}</div>
-      <div class="check-sec-cnt" id="cnt-${sec.id}">${cnt}/${sec.items.length}</div>
-      <div class="check-sec-chev">▾</div>
+  div.className = 'check-section open'; div.id = 'sec-'+sec.id;
+  const done = sec.items.filter(i=>estado[i.id]?.val!==null).length;
+  div.innerHTML = `<div class="check-sec-header" onclick="toggleSec('${sec.id}')">
+    <div class="check-sec-icon" style="background:${sec.color}">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="${sec.stroke}" stroke-width="2" stroke-linecap="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
     </div>
-    <div class="check-items" id="items-${sec.id}"></div>`;
-
+    <div class="check-sec-name">${sec.nombre}</div>
+    <div class="check-sec-cnt" id="cnt-${sec.id}">${done}/${sec.items.length}</div>
+    <div class="check-sec-chev">▾</div>
+  </div>
+  <div class="check-items" id="items-${sec.id}"></div>`;
   const cont = div.querySelector('.check-items');
-  sec.items.forEach((item,idx)=>{
+  sec.items.forEach((item,idx) => {
     const row = document.createElement('div');
-    row.className = 'check-item';
-    row.id = 'row-'+item.id;
+    row.className='check-item'; row.id='row-'+item.id;
     row.innerHTML = `
       <div class="item-num">${idx+1}</div>
       <div class="item-body">
         <div class="item-txt">${item.txt}</div>
-        <div><span class="item-crit ${item.crit==='C'?'crit-c':'crit-nc'}">${item.crit==='C'?'CRÍTICO':'NO CRÍTICO'}</span></div>
+        <span class="item-crit ${item.crit==='C'?'crit-c':'crit-nc'}">${item.crit==='C'?'CRÍTICO':'NO CRÍTICO'}</span>
         <div class="item-obs" id="obs-${item.id}">
-          <textarea rows="2" placeholder="Describe el problema..." oninput="estado['${item.id}'].obs=this.value" style="margin-top:4px;"></textarea>
-
+          <textarea rows="2" placeholder="Describe el problema..." oninput="estado['${item.id}'].obs=this.value" style="margin-top:6px;"></textarea>
         </div>
       </div>
       <div class="check-btns">
@@ -865,319 +654,221 @@ function buildSeccion(sec){
         </button>
       </div>`;
     cont.appendChild(row);
-    applyItemState(item.id);
+    applyItem(item.id);
   });
   return div;
 }
 
-function toggleSec(id){
-  const el=document.getElementById('sec-'+id);
-  el.classList.toggle('open');
+function toggleSec(id){ document.getElementById('sec-'+id).classList.toggle('open'); }
+
+function setItem(id,val,secId) {
+  if (estado[id].val===val) estado[id].val=null; else estado[id].val=val;
+  applyItem(id); updateProgress(); updateCnt(secId); updateBlockBanner();
 }
 
-function setItem(id, val, secId){
-  if(estado[id].val===val) estado[id].val=null;
-  else estado[id].val=val;
-  applyItemState(id);
-  updateProgress();
-  updateSecCounter(secId);
-  updateBlockBanner();
-}
-
-function applyItemState(id){
+function applyItem(id) {
   ['bien','mal','na'].forEach(v=>{
     const b=document.getElementById('cbtn-'+v+'-'+id);
     if(b) b.className='cbtn'+(estado[id].val===v?' '+v:'');
   });
-  const obsEl=document.getElementById('obs-'+id);
-  if(obsEl){
-    if(estado[id].val==='mal') obsEl.classList.add('show');
-    else obsEl.classList.remove('show');
-  }
-  // Highlight row if critical + mal
-  const sec = SECCIONES.flatMap(s=>s.items).find(i=>i.id===id);
-  const row = document.getElementById('row-'+id);
-  if(row) row.classList.toggle('bloqueado', sec?.crit==='C' && estado[id].val==='mal');
+  const obs=document.getElementById('obs-'+id);
+  if(obs) obs.classList.toggle('show', estado[id].val==='mal');
+  const sec=SECCIONES.flatMap(s=>s.items).find(i=>i.id===id);
+  const row=document.getElementById('row-'+id);
+  if(row) row.classList.toggle('bloqueado', sec?.crit==='C'&&estado[id].val==='mal');
 }
 
-function updateSecCounter(secId){
-  const sec=SECCIONES.find(s=>s.id===secId);
-  if(!sec) return;
+function updateCnt(secId) {
+  const sec=SECCIONES.find(s=>s.id===secId); if(!sec) return;
   const done=sec.items.filter(i=>estado[i.id]?.val!==null).length;
-  const el=document.getElementById('cnt-'+secId);
-  if(el) el.textContent=`${done}/${sec.items.length}`;
+  const el=document.getElementById('cnt-'+secId); if(el) el.textContent=done+'/'+sec.items.length;
 }
 
-function updateProgress(){
-  const allItems = SECCIONES.filter(s=>!s.comb||(combSelec&&s.comb.includes(combSelec))).flatMap(s=>s.items);
-  const vals = allItems.map(i=>estado[i.id]?.val);
-  const bien=vals.filter(v=>v==='bien').length;
-  const mal=vals.filter(v=>v==='mal').length;
-  const na=vals.filter(v=>v==='na').length;
-  const pend=vals.filter(v=>v===null).length;
-  const done=bien+mal+na;
-  document.getElementById('prog-fill').style.width=(done/allItems.length*100)+'%';
+function updateProgress() {
+  const all=activeSecs().flatMap(s=>s.items);
+  const bien=all.filter(i=>estado[i.id]?.val==='bien').length;
+  const mal=all.filter(i=>estado[i.id]?.val==='mal').length;
+  const na=all.filter(i=>estado[i.id]?.val==='na').length;
+  const pend=all.filter(i=>estado[i.id]?.val===null).length;
+  document.getElementById('prog-fill').style.width=(( bien+mal+na)/all.length*100)+'%';
   document.getElementById('pc-bien').textContent=bien;
   document.getElementById('pc-mal').textContent=mal;
   document.getElementById('pc-na').textContent=na;
   document.getElementById('pc-pend').textContent=pend;
 }
 
-function getCritMal(){
-  return SECCIONES.flatMap(s=>s.items).filter(i=>i.crit==='C'&&estado[i.id]?.val==='mal');
-}
+function activeSecs(){ return SECCIONES.filter(s=>!s.comb||(combSelec&&s.comb.includes(combSelec))); }
+function critMal(){ return SECCIONES.flatMap(s=>s.items).filter(i=>i.crit==='C'&&estado[i.id]?.val==='mal'); }
 
-function updateBlockBanner(){
-  const critMal=getCritMal();
+function updateBlockBanner() {
+  const cm=critMal();
   const bb=document.getElementById('block-banner');
-  if(critMal.length>0){
+  if(cm.length>0){
     bb.classList.add('show');
-    document.getElementById('block-items-txt').textContent=
-      `Ítems críticos fallados: ${critMal.map(i=>i.id).join(', ')}. El equipo NO puede operar.`;
-  }else{
-    bb.classList.remove('show');
-  }
+    document.getElementById('block-txt').textContent='Críticos fallados: '+cm.map(i=>i.id).join(', ');
+  } else bb.classList.remove('show');
 }
 
-// ─── NAVIGATION ─────────────────────────────────────────────
-function renderPage(n){
+// ── COMBUSTIBLE ───────────────────────────────────────────
+function setComb(v) {
+  combSelec=v;
+  document.querySelectorAll('.comb-btn').forEach(b=>b.classList.toggle('sel',b.textContent.includes(v)));
+}
+
+// ── NAVEGACIÓN ────────────────────────────────────────────
+function renderPage(n) {
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-  [0,1,2,3,4].forEach(i=>{
+  [0,1,2,3].forEach(i=>{
     const d=document.getElementById('sd'+i);
     if(d) d.className='step-dot'+(i<n?' done':i===n?' active':'');
   });
   document.getElementById('prog-wrap').style.display=(n===1||n===2)?'block':'none';
-  const pageId = n===5?'page-sec2':`page-${n}`;
-  const pg = document.getElementById(pageId);
-  if(pg) pg.classList.add('active');
-
-  const backBtn=document.getElementById('btn-back');
-  const nextBtn=document.getElementById('btn-next');
-
-  if(n===4){
-    document.getElementById('bottom-nav').style.display='none';
-    document.getElementById('steps-wrap').style.display='none';
-  }else{
-    document.getElementById('bottom-nav').style.display='flex';
-    document.getElementById('steps-wrap').style.display='flex';
-    backBtn.style.display=n===0?'none':'flex';
-    if(n===3){nextBtn.textContent='✓ Enviar inspección';nextBtn.className='btn btn-success';buildSummary();}
-    else if(n===5){nextBtn.textContent='✓ Guardar Sección 2';nextBtn.className='btn btn-primary';}
-    else{nextBtn.textContent='Continuar →';nextBtn.className='btn btn-primary';}
-  }
+  const pId = n===5?'page-5':'page-'+n;
+  document.getElementById(pId)?.classList.add('active');
+  const back=document.getElementById('btn-back');
+  const next=document.getElementById('btn-next');
+  if(n===4){ document.getElementById('bottom-nav').style.display='none'; document.getElementById('steps-wrap').style.display='none'; return; }
+  document.getElementById('bottom-nav').style.display='flex';
+  document.getElementById('steps-wrap').style.display='flex';
+  back.style.display=n===0?'none':'flex';
+  if(n===3){ next.textContent='✓ Enviar inspección'; next.className='btn btn-success'; buildSummary(); }
+  else if(n===5){ next.textContent='✓ Guardar Sección 2'; next.className='btn btn-primary'; }
+  else { next.textContent='Continuar →'; next.className='btn btn-primary'; }
   window.scrollTo(0,0);
 }
 
-function goNext(){
-  if(currentPage===0){
-    if(!validate0())return;
-    if(combSelec){renderSecciones();updateProgress();}
-    currentPage=1;
-  }else if(currentPage===1){currentPage=2;}
-  else if(currentPage===2){currentPage=3;}
-  else if(currentPage===3){submitForm();return;}
-  else if(currentPage===5){submitSec2();return;}
+function goNext() {
+  if(currentPage===0){ if(!val0()) return; if(combSelec){renderSecciones();updateProgress();} currentPage=1; }
+  else if(currentPage===1){ currentPage=2; }
+  else if(currentPage===2){ currentPage=3; }
+  else if(currentPage===3){ submitForm(); return; }
+  else if(currentPage===5){ submitSec2(); return; }
   renderPage(currentPage);
 }
-function goBack(){
-  if(currentPage>0&&currentPage!==5){currentPage--;renderPage(currentPage);}
-  else if(currentPage===5){currentPage=4;renderPage(4);}
-}
-function irSeccion2(){currentPage=5;renderPage(5);}
+function goBack(){ if(currentPage>0&&currentPage!==5){currentPage--;renderPage(currentPage);} else if(currentPage===5){currentPage=4;renderPage(4);} }
+function irSec2(){ currentPage=5; renderPage(5); }
 
-function validate0(){
-  if(!document.getElementById('f-operador').value.trim()){toast('Ingresa tu nombre');return false;}
-  if(!document.getElementById('f-turno').value){toast('Selecciona el turno');return false;}
-  if(!document.getElementById('f-horo-ini').value){toast('Ingresa el horómetro inicial');return false;}
-  if(!combSelec){toast('Selecciona la fuente de energía');return false;}
+function val0() {
+  if(!document.getElementById('f-operador').value.trim()){showT('Ingresa tu nombre');return false;}
+  if(!document.getElementById('f-turno').value){showT('Selecciona el turno');return false;}
+  if(!document.getElementById('f-horo-ini').value){showT('Ingresa el horómetro inicial');return false;}
+  if(!combSelec){showT('Selecciona la fuente de energía');return false;}
   return true;
 }
 
-function setComb(v){
-  combSelec=v;
-  document.querySelectorAll('.comb-btn').forEach(b=>{
-    b.classList.toggle('sel', b.textContent.includes(v));
-  });
-}
-
-// ─── SUMMARY ────────────────────────────────────────────────
-function buildSummary(){
-  const allItems=SECCIONES.filter(s=>!s.comb||(combSelec&&s.comb.includes(combSelec))).flatMap(s=>s.items);
-  const bien=allItems.filter(i=>estado[i.id]?.val==='bien').length;
-  const mal=allItems.filter(i=>estado[i.id]?.val==='mal').length;
-  const na=allItems.filter(i=>estado[i.id]?.val==='na').length;
-  const critMal=getCritMal();
-  const resultado=critMal.length>0?'BLOQUEADO':(mal>0?'OBSERVADO':'APROBADO');
-
-  document.getElementById('sum-total').textContent=allItems.length;
+// ── SUMMARY ───────────────────────────────────────────────
+function buildSummary() {
+  const all=activeSecs().flatMap(s=>s.items);
+  const bien=all.filter(i=>estado[i.id]?.val==='bien').length;
+  const mal=all.filter(i=>estado[i.id]?.val==='mal').length;
+  const na=all.filter(i=>estado[i.id]?.val==='na').length;
+  const cm=critMal();
+  const res=cm.length>0?'BLOQUEADO':mal>0?'OBSERVADO':'APROBADO';
+  document.getElementById('sum-total').textContent=all.length;
   document.getElementById('sum-bien').textContent=bien;
   document.getElementById('sum-mal').textContent=mal;
   document.getElementById('sum-na').textContent=na;
-  document.getElementById('sum-crit-mal').textContent=critMal.length;
-
-  const resEl=document.getElementById('sum-resultado');
-  resEl.textContent=resultado;
-  resEl.style.color=resultado==='BLOQUEADO'?'var(--red)':resultado==='OBSERVADO'?'var(--amber)':'var(--green)';
-
-  // Lista críticos
-  const listWrap=document.getElementById('crit-list-wrap');
-  if(critMal.length>0){
-    listWrap.style.display='block';
-    document.getElementById('crit-list').innerHTML=critMal.map(i=>
-      `<div style="font-size:12px;padding:5px 0;border-bottom:1px solid rgba(239,68,68,0.15);font-family:var(--mono);">
-        <span style="color:var(--red);">${i.id}</span>
-        <span style="color:var(--text2);margin-left:8px;font-family:var(--sans);">${i.txt}</span>
-      </div>`).join('');
-  }else listWrap.style.display='none';
+  document.getElementById('sum-crit').textContent=cm.length;
+  const re=document.getElementById('sum-res');
+  re.textContent=res;
+  re.style.color=res==='BLOQUEADO'?'var(--red)':res==='OBSERVADO'?'var(--amber)':'var(--green)';
+  const cw=document.getElementById('crit-wrap');
+  if(cm.length>0){
+    cw.style.display='block';
+    document.getElementById('crit-list').innerHTML=cm.map(i=>`<div style="font-size:12px;padding:4px 0;border-bottom:1px solid rgba(239,68,68,0.15)"><span style="font-family:var(--mono);color:var(--red)">${i.id}</span><span style="color:var(--text2);margin-left:8px">${i.txt}</span></div>`).join('');
+  } else cw.style.display='none';
 }
 
-// ─── SUBMIT ─────────────────────────────────────────────────
-async function submitForm(){
-  if(!hasSig){toast('Firma requerida para enviar');return;}
-  const allItems=SECCIONES.filter(s=>!s.comb||(combSelec&&s.comb.includes(combSelec))).flatMap(s=>s.items);
-  const bien=allItems.filter(i=>estado[i.id]?.val==='bien').length;
-  const mal=allItems.filter(i=>estado[i.id]?.val==='mal').length;
-  const na=allItems.filter(i=>estado[i.id]?.val==='na').length;
-  const critMal=getCritMal();
-  const resultado=critMal.length>0?'BLOQUEADO':(mal>0?'OBSERVADO':'APROBADO');
-  const puedeOperar=critMal.length===0;
-
+// ── SUBMIT ────────────────────────────────────────────────
+async function submitForm() {
+  if(!hasSig){showT('Firma requerida');return;}
+  const all=activeSecs().flatMap(s=>s.items);
+  const bien=all.filter(i=>estado[i.id]?.val==='bien').length;
+  const mal=all.filter(i=>estado[i.id]?.val==='mal').length;
+  const na=all.filter(i=>estado[i.id]?.val==='na').length;
+  const cm=critMal();
+  const res=cm.length>0?'BLOQUEADO':mal>0?'OBSERVADO':'APROBADO';
+  const puedeOperar=cm.length===0;
   const btn=document.getElementById('btn-next');
-  btn.disabled=true;btn.innerHTML='<div class="spinner-sm"></div> Guardando...';
+  btn.disabled=true; btn.innerHTML='<div style="width:16px;height:16px;border:2px solid rgba(255,255,255,0.3);border-top-color:white;border-radius:50%;animation:spin 0.7s linear infinite"></div> Guardando...';
   sync(true);
-
   const now=new Date();
-  recordId='CHK-'+now.toISOString().slice(0,10).replace(/-/g,'')+'-'+(UNIT.placa||'XX').replace(/[^A-Z0-9]/g,'')+'-'+now.getHours();
-
-  // 1. Insertar cabecera
+  const placa=UNIT.placa||UNIT.codigo;
+  recordId='CHK-'+now.toISOString().slice(0,10).replace(/-/g,'')+'-'+placa.replace(/[^A-Z0-9]/gi,'').slice(0,6).toUpperCase()+'-'+now.getHours();
   const{data:insp,error:e1}=await sb.from('checklist_inspeccion').insert({
-    record_id:recordId,
-    fecha:now.toISOString().split('T')[0],
+    record_id:recordId,fecha:now.toISOString().split('T')[0],
     hora_inspeccion:now.toTimeString().slice(0,5),
     turno:document.getElementById('f-turno').value,
-    placa:UNIT.placa,codigo_pptt:UNIT.codigo,marca:UNIT.marca,modelo:UNIT.modelo,
+    placa,codigo_pptt:UNIT.codigo,marca:UNIT.marca,modelo:UNIT.modelo,
     capacidad:UNIT.cap,cd:UNIT.cd,fuente_energia:combSelec,
     operador_nombre:document.getElementById('f-operador').value,
     horometro_inicial:parseFloat(document.getElementById('f-horo-ini').value)||null,
-    horometro_final:null,
-    total_items:allItems.length,items_bien:bien,items_mal:mal,items_na:na,
-    items_criticos_mal:critMal.length,resultado,puede_operar:puedeOperar,
+    total_items:all.length,items_bien:bien,items_mal:mal,items_na:na,
+    items_criticos_mal:cm.length,resultado:res,puede_operar:puedeOperar,
     observaciones:document.getElementById('f-obs').value,
     firma_operador:sigCanvas.toDataURL('image/png'),
   }).select().single();
-
-  if(e1){btn.disabled=false;btn.innerHTML='✓ Enviar inspección';showToast('Error: '+e1.message,true);sync(false);return;}
-
+  if(e1){btn.disabled=false;btn.innerHTML='✓ Enviar inspección';btn.className='btn btn-success';showT('Error: '+e1.message);sync(false);return;}
   inspeccionIdHoy=insp.id;
-
-  // 2. Insertar detalle ítems
-  const detalles=allItems.map(i=>{
+  const detalles=all.map(i=>{
     const sec=SECCIONES.find(s=>s.items.some(x=>x.id===i.id));
-    return{
-      inspeccion_id:insp.id,record_id:recordId,
-      fecha:now.toISOString().split('T')[0],
-      placa:UNIT.placa,cd:UNIT.cd,turno:document.getElementById('f-turno').value,
-      item_id:i.id,seccion:sec.id,seccion_nombre:sec.nombre,
-      descripcion:i.txt,criticidad:i.crit,
-      estado:estado[i.id]?.val||'pendiente',
-      tarjeta_roja:false,
-      observacion:estado[i.id]?.obs||'',
-    };
+    return{inspeccion_id:insp.id,record_id:recordId,fecha:now.toISOString().split('T')[0],placa,cd:UNIT.cd,turno:document.getElementById('f-turno').value,item_id:i.id,seccion:sec.id,seccion_nombre:sec.nombre,descripcion:i.txt,criticidad:i.crit,estado:estado[i.id]?.val||'pendiente',tarjeta_roja:false,observacion:estado[i.id]?.obs||''};
   });
   await sb.from('checklist_detalle').insert(detalles);
-
-  // 3. Si hay críticos fallados → insertar alerta
-  if(critMal.length>0){
-    await sb.from('checklist_alertas').insert({
-      inspeccion_id:insp.id,record_id:recordId,
-      fecha:now.toISOString().split('T')[0],
-      placa:UNIT.placa,cd:UNIT.cd,
-      operador:document.getElementById('f-operador').value,
-      items_fallados:JSON.stringify(critMal.map(i=>({id:i.id,txt:i.txt}))),
-    });
+  if(cm.length>0){
+    await sb.from('checklist_alertas').insert({inspeccion_id:insp.id,record_id:recordId,fecha:now.toISOString().split('T')[0],placa,cd:UNIT.cd,operador:document.getElementById('f-operador').value,items_fallados:JSON.stringify(cm.map(i=>({id:i.id,txt:i.txt})))});
   }
-
   sync(false);
-  currentPage=4;
-  renderPage(4);
-
-  // Mostrar pantalla resultado
+  currentPage=4; renderPage(4);
   if(puedeOperar){
     document.getElementById('screen-ok').style.display='block';
     document.getElementById('screen-block').style.display='none';
-    document.getElementById('ok-record').textContent='ID: '+recordId;
-    document.getElementById('ok-sub').textContent=
-      resultado==='APROBADO'?`Equipo OPERATIVO · ${bien} ítems conformes`:`Equipo operativo con ${mal} observación(es) no crítica(s)`;
-  }else{
+    document.getElementById('ok-rec').textContent='ID: '+recordId;
+    document.getElementById('ok-sub').textContent=res==='APROBADO'?'Equipo OPERATIVO · '+bien+' ítems conformes':'Operativo con '+mal+' observación(es) no crítica(s)';
+  } else {
     document.getElementById('screen-ok').style.display='none';
     document.getElementById('screen-block').style.display='block';
-    document.getElementById('block-record').textContent='ID: '+recordId;
-    document.getElementById('block-sub').innerHTML=
-      `<strong style="color:var(--red);">${critMal.length} ítem(s) CRÍTICO(S) fallado(s).</strong><br>El equipo NO puede operar hasta levantar las observaciones.`;
-
-    // WhatsApp supervisor por CD
-    const supervisores = {
-      'Matarani': '51983840664',
-    };
-    const numSup = supervisores[UNIT.cd] || '';
-    const operadorNom = document.getElementById('f-operador').value;
-    const turnoVal    = document.getElementById('f-turno').value;
-    const msg = '🚫 *ALERTA EQUIPO BLOQUEADO*'
-      + '\n\n*Placa:* '    + (UNIT.placa || UNIT.codigo)
-      + '\n*CD:* '          + UNIT.cd
-      + '\n*Operador:* '    + operadorNom
-      + '\n*Turno:* '       + turnoVal
-      + '\n*Fecha/Hora:* '  + now.toLocaleDateString('es-PE') + ' ' + now.toLocaleTimeString('es-PE',{hour:'2-digit',minute:'2-digit'})
-      + '\n\n*Ítems críticos fallados:*'
-      + '\n' + critMal.map(i => '• ' + i.id + ': ' + i.txt).join('\n')
-      + '\n\n*ID Registro:* ' + recordId
-      + '\n\n⚠ El equipo NO puede operar hasta levantar las observaciones.';
-
-    const wspUrl = numSup
-      ? 'https://wa.me/' + numSup + '?text=' + encodeURIComponent(msg)
-      : 'https://wa.me/?text='   + encodeURIComponent(msg);
-
-    const wspBtn = document.getElementById('wsp-link');
-    wspBtn.href = wspUrl;
-    wspBtn.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>'
-      + (numSup ? ' 📲 Enviar alerta a supervisor (' + UNIT.cd + ')' : ' Enviar alerta por WhatsApp');
+    document.getElementById('blk-rec').textContent='ID: '+recordId;
+    document.getElementById('blk-sub').innerHTML='<strong style="color:var(--red)">'+cm.length+' ítem(s) CRÍTICO(S) fallado(s).</strong><br>El equipo NO puede operar.';
+    const sups={'Matarani':'51983840664'};
+    const num=sups[UNIT.cd]||'';
+    const msg='🚫 *ALERTA EQUIPO BLOQUEADO*\n\n*Equipo:* '+(UNIT.codigo||placa)+'\n*CD:* '+UNIT.cd+'\n*Operador:* '+document.getElementById('f-operador').value+'\n*Turno:* '+document.getElementById('f-turno').value+'\n*Fecha:* '+now.toLocaleDateString('es-PE')+'\n\n*Ítems críticos fallados:*\n'+cm.map(i=>'• '+i.id+': '+i.txt).join('\n')+'\n\n*ID Registro:* '+recordId+'\n\n⚠ El equipo NO puede operar hasta levantar las observaciones.';
+    document.getElementById('wsp-btn').href=(num?'https://wa.me/'+num:'https://wa.me')+'?text='+encodeURIComponent(msg);
+    if(num) document.getElementById('wsp-btn').innerHTML=document.getElementById('wsp-btn').innerHTML.replace('Notificar supervisor por WhatsApp','📲 Enviar alerta — Supervisor '+UNIT.cd);
   }
 }
 
-async function submitSec2(){
-  if(!hasSig2){toast('Firma requerida');return;}
-  if(!document.getElementById('s2-operador').value.trim()){toast('Ingresa el nombre del operador');return;}
+async function submitSec2() {
+  if(!hasSig2){showT('Firma requerida');return;}
+  if(!document.getElementById('s2-op').value.trim()){showT('Ingresa el nombre');return;}
   const btn=document.getElementById('btn-next');
-  btn.disabled=true;btn.innerHTML='<div class="spinner-sm"></div> Guardando...';sync(true);
-
+  btn.disabled=true;btn.innerHTML='<div style="width:16px;height:16px;border:2px solid rgba(255,255,255,0.3);border-top-color:white;border-radius:50%;animation:spin 0.7s linear infinite"></div> Guardando...';
+  sync(true);
   const now=new Date();
   await sb.from('checklist_uso_turno').insert({
-    inspeccion_id:inspeccionIdHoy,
-    record_id:recordId,
-    fecha:now.toISOString().split('T')[0],
-    placa:UNIT.placa,cd:UNIT.cd,
-    operador_nombre:document.getElementById('s2-operador').value,
+    inspeccion_id:inspeccionIdHoy,record_id:recordId,
+    fecha:now.toISOString().split('T')[0],placa:UNIT.placa||UNIT.codigo,cd:UNIT.cd,
+    operador_nombre:document.getElementById('s2-op').value,
     area:document.getElementById('s2-area').value,
-    hora_inicio:document.getElementById('s2-hinicio').value,
-    hora_fin:document.getElementById('s2-hfin').value,
-    horometro_inicial:parseFloat(document.getElementById('s2-horo-ini').value)||null,
-    horometro_final:parseFloat(document.getElementById('s2-horo-fin').value)||null,
-    actividad:document.getElementById('s2-actividad').value,
+    hora_inicio:document.getElementById('s2-hi').value,
+    hora_fin:document.getElementById('s2-hf').value,
+    horometro_inicial:parseFloat(document.getElementById('s2-hoi').value)||null,
+    horometro_final:parseFloat(document.getElementById('s2-hof').value)||null,
+    actividad:document.getElementById('s2-act').value,
     cuenta_ast_pts:document.getElementById('s2-ast').value,
     observaciones:document.getElementById('s2-obs').value,
     firma:sig2Canvas.toDataURL('image/png'),
   });
-
   sync(false);
-  showToastMsg('✓ Sección 2 registrada correctamente');
+  showT('✓ Sección 2 guardada');
   setTimeout(reiniciar,2000);
 }
 
-function reiniciar(){
-  Object.keys(estado).forEach(k=>estado[k]={val:null,obs:'',tarjeta_roja:false});
+function reiniciar() {
+  SECCIONES.forEach(s=>s.items.forEach(i=>estado[i.id]={val:null,obs:''}));
   hasSig=false;hasSig2=false;
-  clearSig();clearSig2();
-  combSelec=UNIT.comb||null;
+  if(sigCtx)  sigCtx.clearRect(0,0,sigCanvas.width,sigCanvas.height);
+  if(sig2Ctx) sig2Ctx.clearRect(0,0,sig2Canvas.width,sig2Canvas.height);
   document.getElementById('f-operador').value='';
   document.getElementById('f-turno').value='';
   document.getElementById('f-horo-ini').value='';
@@ -1187,150 +878,16 @@ function reiniciar(){
   document.getElementById('block-banner').classList.remove('show');
   document.getElementById('bottom-nav').style.display='flex';
   document.getElementById('steps-wrap').style.display='flex';
-  renderSecciones();
-  SECCIONES.forEach(s=>s.items.forEach(i=>applyItemState(i.id)));
-  updateProgress();
   const btn=document.getElementById('btn-next');
   btn.disabled=false;btn.textContent='Continuar →';btn.className='btn btn-primary';
-  currentPage=0;renderPage(0);
-}
-
-function sync(on){document.getElementById('sync-bar').classList.toggle('on',on);}
-function toast(msg){showToastMsg(msg);}
-function showToastMsg(msg){
-  const t=document.getElementById('toast');
-  t.textContent=msg;t.classList.add('show');
-  setTimeout(()=>t.classList.remove('show'),2800);
-}
-// ── INIT ──────────────────────────────────────────────────
-window.addEventListener('DOMContentLoaded', async () => {
-
-  // Si viene sin parámetros (desde el menú) → mostrar selector
-  if (!UNIT.placa && !UNIT.codigo) {
-    document.getElementById('selector-screen').style.display = 'block';
-    document.getElementById('steps-wrap').style.display      = 'none';
-    document.getElementById('bottom-nav').style.display      = 'none';
-    document.getElementById('prog-wrap').style.display       = 'none';
-    await cargarEquiposSelector();
-    return;
-  }
-
-  // Viene con QR → mostrar checklist normal
-  document.getElementById('selector-screen').style.display = 'none';
-
-  // Llenar datos del equipo
-  document.getElementById('ui-placa').textContent  = UNIT.placa  || '—';
-  document.getElementById('ui-codigo').textContent = UNIT.codigo || '—';
-  document.getElementById('ui-modelo').textContent = [UNIT.marca, UNIT.modelo].filter(Boolean).join(' ') || '—';
-  document.getElementById('ui-cap').textContent    = UNIT.cap    || '—';
-  document.getElementById('ui-cd').textContent     = UNIT.cd     || '—';
-  document.getElementById('hdr-sub').textContent   = `CAR04-F17 · ${new Date().toLocaleDateString('es-PE',{day:'2-digit',month:'short',year:'numeric'})}`;
-
-  if (UNIT.comb) setComb(UNIT.comb);
-
-  // Inicializar ítems
-  SECCIONES.forEach(sec => sec.items.forEach(i => estado[i.id] = {val:null, obs:''}));
   renderSecciones();
-
-  // Firmas
-  sigCanvas  = document.getElementById('sig-canvas');
-  sigCanvas.width = Math.min(window.innerWidth - 40, 560);
-  sigCtx = initSig(sigCanvas, v => hasSig = v);
-
-  sig2Canvas = document.getElementById('sig2-canvas');
-  sig2Canvas.width = Math.min(window.innerWidth - 40, 560);
-  sig2Ctx = initSig(sig2Canvas, v => hasSig2 = v);
-
-  // Verificar si ya hay inspección hoy
-  if (UNIT.placa) {
-    const hoy = new Date().toISOString().split('T')[0];
-    const { data } = await sb.from('checklist_inspeccion')
-      .select('id,record_id').eq('placa', UNIT.placa).eq('fecha', hoy).limit(1);
-    if (data && data.length > 0) {
-      inspeccionIdHoy = data[0].id;
-      recordId        = data[0].record_id;
-      document.getElementById('sec2-banner').classList.add('show');
-    }
-  }
-
-  renderPage(0);
-});
-
-// ── SELECTOR DE EQUIPOS (desde Supabase) ──────────────────
-let equiposSB = [];
-
-async function cargarEquiposSelector() {
-  sync(true);
-  try {
-    const { data, error } = await sb
-      .from('equipos')
-      .select('id,codigo,placa,marca,modelo,capacidad,combustible,cd,status')
-      .order('cd').order('id');
-    if (error) throw error;
-    equiposSB = data;
-
-    const sel = document.getElementById('eq-selector');
-    sel.innerHTML = '<option value="">-- Selecciona un equipo --</option>';
-
-    // Agrupar por CD
-    const porCD = {};
-    data.forEach(e => {
-      if (!porCD[e.cd]) porCD[e.cd] = [];
-      porCD[e.cd].push(e);
-    });
-
-    Object.keys(porCD).sort().forEach(cd => {
-      const grp = document.createElement('optgroup');
-      grp.label = cd;
-      porCD[cd].forEach(e => {
-        const id  = e.codigo || e.placa || e.id;
-        const opt = document.createElement('option');
-        opt.value       = e.id;
-        opt.textContent = id + '  ·  ' + cd + (e.status !== 'Operativo' ? '  ⚠' : '');
-        grp.appendChild(opt);
-      });
-      sel.appendChild(grp);
-    });
-
-  } catch(err) {
-    showToastMsg('Error cargando equipos: ' + err.message);
-  }
-  sync(false);
+  SECCIONES.forEach(s=>s.items.forEach(i=>applyItem(i.id)));
+  updateProgress();
+  currentPage=0; renderPage(0);
 }
 
-function onSelectEquipo() {
-  const id   = document.getElementById('eq-selector').value;
-  const btn  = document.getElementById('btn-iniciar');
-  const prev = document.getElementById('eq-preview');
-  if (!id) { btn.disabled = true; prev.classList.remove('show'); return; }
-  const eq = equiposSB.find(e => e.id === id);
-  if (!eq) return;
-  document.getElementById('prev-modelo').textContent = [eq.marca, eq.modelo].filter(Boolean).join(' ') || '—';
-  document.getElementById('prev-cap').textContent    = eq.capacidad ? eq.capacidad + ' TM' : '—';
-  document.getElementById('prev-comb').textContent   = eq.combustible || '—';
-  const stEl = document.getElementById('prev-status');
-  stEl.textContent = eq.status || '—';
-  stEl.style.color = eq.status==='Operativo'?'var(--green)':eq.status==='Inoperativo'?'var(--red)':'var(--amber)';
-  prev.classList.add('show');
-  btn.disabled = false;
-}
-
-function iniciarChecklist() {
-  const id = document.getElementById('eq-selector').value;
-  const eq = equiposSB.find(e => e.id === id);
-  if (!eq) return;
-  const params = new URLSearchParams({
-    placa:  eq.placa  || eq.codigo || eq.id,
-    codigo: eq.codigo || eq.id,
-    marca:  eq.marca  || '',
-    modelo: eq.modelo || '',
-    cap:    eq.capacidad || '',
-    cd:     eq.cd     || '',
-    comb:   eq.combustible || '',
-  });
-  window.location.href = 'checklist.html?' + params.toString();
-}
-
+function sync(on){ document.getElementById('sync-bar').classList.toggle('on',on); }
+function showT(msg){ const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2800); }
 </script>
 </body>
 </html>
