@@ -1202,6 +1202,135 @@ function showToastMsg(msg){
   t.textContent=msg;t.classList.add('show');
   setTimeout(()=>t.classList.remove('show'),2800);
 }
+// ── INIT ──────────────────────────────────────────────────
+window.addEventListener('DOMContentLoaded', async () => {
+
+  // Si viene sin parámetros (desde el menú) → mostrar selector
+  if (!UNIT.placa && !UNIT.codigo) {
+    document.getElementById('selector-screen').style.display = 'block';
+    document.getElementById('steps-wrap').style.display      = 'none';
+    document.getElementById('bottom-nav').style.display      = 'none';
+    document.getElementById('prog-wrap').style.display       = 'none';
+    await cargarEquiposSelector();
+    return;
+  }
+
+  // Viene con QR → mostrar checklist normal
+  document.getElementById('selector-screen').style.display = 'none';
+
+  // Llenar datos del equipo
+  document.getElementById('ui-placa').textContent  = UNIT.placa  || '—';
+  document.getElementById('ui-codigo').textContent = UNIT.codigo || '—';
+  document.getElementById('ui-modelo').textContent = [UNIT.marca, UNIT.modelo].filter(Boolean).join(' ') || '—';
+  document.getElementById('ui-cap').textContent    = UNIT.cap    || '—';
+  document.getElementById('ui-cd').textContent     = UNIT.cd     || '—';
+  document.getElementById('hdr-sub').textContent   = `CAR04-F17 · ${new Date().toLocaleDateString('es-PE',{day:'2-digit',month:'short',year:'numeric'})}`;
+
+  if (UNIT.comb) setComb(UNIT.comb);
+
+  // Inicializar ítems
+  SECCIONES.forEach(sec => sec.items.forEach(i => estado[i.id] = {val:null, obs:''}));
+  renderSecciones();
+
+  // Firmas
+  sigCanvas  = document.getElementById('sig-canvas');
+  sigCanvas.width = Math.min(window.innerWidth - 40, 560);
+  sigCtx = initSig(sigCanvas, v => hasSig = v);
+
+  sig2Canvas = document.getElementById('sig2-canvas');
+  sig2Canvas.width = Math.min(window.innerWidth - 40, 560);
+  sig2Ctx = initSig(sig2Canvas, v => hasSig2 = v);
+
+  // Verificar si ya hay inspección hoy
+  if (UNIT.placa) {
+    const hoy = new Date().toISOString().split('T')[0];
+    const { data } = await sb.from('checklist_inspeccion')
+      .select('id,record_id').eq('placa', UNIT.placa).eq('fecha', hoy).limit(1);
+    if (data && data.length > 0) {
+      inspeccionIdHoy = data[0].id;
+      recordId        = data[0].record_id;
+      document.getElementById('sec2-banner').classList.add('show');
+    }
+  }
+
+  renderPage(0);
+});
+
+// ── SELECTOR DE EQUIPOS (desde Supabase) ──────────────────
+let equiposSB = [];
+
+async function cargarEquiposSelector() {
+  sync(true);
+  try {
+    const { data, error } = await sb
+      .from('equipos')
+      .select('id,codigo,placa,marca,modelo,capacidad,combustible,cd,status')
+      .order('cd').order('id');
+    if (error) throw error;
+    equiposSB = data;
+
+    const sel = document.getElementById('eq-selector');
+    sel.innerHTML = '<option value="">-- Selecciona un equipo --</option>';
+
+    // Agrupar por CD
+    const porCD = {};
+    data.forEach(e => {
+      if (!porCD[e.cd]) porCD[e.cd] = [];
+      porCD[e.cd].push(e);
+    });
+
+    Object.keys(porCD).sort().forEach(cd => {
+      const grp = document.createElement('optgroup');
+      grp.label = cd;
+      porCD[cd].forEach(e => {
+        const id  = e.codigo || e.placa || e.id;
+        const opt = document.createElement('option');
+        opt.value       = e.id;
+        opt.textContent = id + '  ·  ' + cd + (e.status !== 'Operativo' ? '  ⚠' : '');
+        grp.appendChild(opt);
+      });
+      sel.appendChild(grp);
+    });
+
+  } catch(err) {
+    showToastMsg('Error cargando equipos: ' + err.message);
+  }
+  sync(false);
+}
+
+function onSelectEquipo() {
+  const id   = document.getElementById('eq-selector').value;
+  const btn  = document.getElementById('btn-iniciar');
+  const prev = document.getElementById('eq-preview');
+  if (!id) { btn.disabled = true; prev.classList.remove('show'); return; }
+  const eq = equiposSB.find(e => e.id === id);
+  if (!eq) return;
+  document.getElementById('prev-modelo').textContent = [eq.marca, eq.modelo].filter(Boolean).join(' ') || '—';
+  document.getElementById('prev-cap').textContent    = eq.capacidad ? eq.capacidad + ' TM' : '—';
+  document.getElementById('prev-comb').textContent   = eq.combustible || '—';
+  const stEl = document.getElementById('prev-status');
+  stEl.textContent = eq.status || '—';
+  stEl.style.color = eq.status==='Operativo'?'var(--green)':eq.status==='Inoperativo'?'var(--red)':'var(--amber)';
+  prev.classList.add('show');
+  btn.disabled = false;
+}
+
+function iniciarChecklist() {
+  const id = document.getElementById('eq-selector').value;
+  const eq = equiposSB.find(e => e.id === id);
+  if (!eq) return;
+  const params = new URLSearchParams({
+    placa:  eq.placa  || eq.codigo || eq.id,
+    codigo: eq.codigo || eq.id,
+    marca:  eq.marca  || '',
+    modelo: eq.modelo || '',
+    cap:    eq.capacidad || '',
+    cd:     eq.cd     || '',
+    comb:   eq.combustible || '',
+  });
+  window.location.href = 'checklist.html?' + params.toString();
+}
+
 </script>
 </body>
 </html>
