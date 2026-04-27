@@ -96,9 +96,7 @@ select.fld{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.
 .fld-grp{margin-bottom:12px;}
 .sect-lbl{font-size:10px;text-transform:uppercase;letter-spacing:0.1em;color:var(--text3);margin:18px 0 10px;display:flex;align-items:center;gap:8px;}
 .sect-lbl::after{content:'';flex:1;height:1px;background:var(--bord2);}
-.comb-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;}
-.comb-btn{padding:10px;border-radius:var(--r-sm);border:1.5px solid var(--bord2);background:var(--surf2);color:var(--text2);font-size:12px;font-weight:500;cursor:pointer;font-family:var(--sans);transition:all 0.15s;text-align:center;}
-.comb-btn.sel{border-color:var(--accent);background:rgba(37,99,235,0.12);color:var(--accent);}
+
 
 /* ── CHECK ITEMS ── */
 .check-section{background:var(--surf);border:1px solid var(--bord);border-radius:var(--r);overflow:hidden;margin-bottom:10px;}
@@ -263,13 +261,6 @@ select.fld{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.
   <div class="fld-row">
     <div><label class="fld">Turno *</label><select id="f-turno" class="fld"><option value="">Seleccionar...</option><option>Día</option><option>Noche</option></select></div>
     <div><label class="fld">Horómetro inicial *</label><input type="number" id="f-horo-ini" class="fld" placeholder="hrs" inputmode="decimal" step="0.1"></div>
-  </div>
-  <div class="sect-lbl">Fuente de energía del vehículo</div>
-  <div class="comb-grid">
-    <button class="comb-btn" onclick="setComb('Eléctrico')">⚡ Eléctrico</button>
-    <button class="comb-btn" onclick="setComb('GLP')">🔵 GLP</button>
-    <button class="comb-btn" onclick="setComb('GNV')">🟢 GNV</button>
-    <button class="comb-btn" onclick="setComb('Gasolina')">🔴 Gasolina / Diesel</button>
   </div>
 </div>
 
@@ -752,7 +743,6 @@ function val0() {
   if(!document.getElementById('f-operador').value.trim()){showT('Ingresa tu nombre');return false;}
   if(!document.getElementById('f-turno').value){showT('Selecciona el turno');return false;}
   if(!document.getElementById('f-horo-ini').value){showT('Ingresa el horómetro inicial');return false;}
-  if(!combSelec){showT('Selecciona la fuente de energía');return false;}
   return true;
 }
 
