@@ -533,71 +533,108 @@ function closeModal(){
   document.getElementById('overlay').classList.remove('open');
   document.body.style.overflow='';
   activeId=null;
-  document.getElementById('btn-save').disabled=false;
-  document.getElementById('save-lbl').textContent='✓ Guardar estado';
+  setBtnLoading(false);
+}
+
+function setBtnLoading(loading){
+  const btn=document.getElementById('btn-save');
+  if(!btn) return;
+  sync(loading);
+  if(loading){
+    btn.disabled=true;
+    btn.innerHTML='<div class="spinner-sm"></div> Guardando...';
+  } else {
+    btn.disabled=false;
+    const lbl=modoTab==='reg'?'✓ Guardar registro':'✓ Guardar estado';
+    btn.innerHTML='<span id="save-lbl">'+lbl+'</span>';
+  }
 }
 function closeBg(e){if(e.target===document.getElementById('overlay'))closeModal();}
 
 // ── GUARDAR ───────────────────────────────────────────────
 async function guardar(){
-  const sup=document.getElementById('sup-name').value.trim()||'Sin nombre';
-  const c=CONT.find(x=>x.id===activeId);
-  const estadoFinal=nuevoEstado||c.status;
-  const btn=document.getElementById('btn-save');
+  const sup = document.getElementById('sup-name').value.trim() || 'Sin nombre';
+  const cont = CONT.find(x => x.id === activeId);
+  if(!cont) return;
+  const estadoFinal = nuevoEstado || cont.status;
+  const btn = document.getElementById('btn-save');
+  const savedId = activeId; // guardar antes de que closeModal lo limpie
 
-  // SOLO ESTADO
-  if(modoTab==='estado'){
-    if(!nuevoEstado){showToast('Selecciona un estado',true);return;}
-    btn.disabled=true;btn.innerHTML='<div class="spinner-sm"></div> Guardando...';sync(true);
-    await sb.from('contometros').update({status:nuevoEstado}).eq('id',activeId);
-    const idx=CONT.findIndex(x=>x.id===activeId); if(idx>=0) CONT[idx].status=nuevoEstado;
-    sync(false); closeModal(); renderStats(); applyFilters();
-    showToast('✓ Estado actualizado — '+activeId);
+  // ── SOLO ESTADO ──────────────────────────────────────
+  if(modoTab === 'estado'){
+    if(!nuevoEstado){ showToast('Selecciona un estado', true); return; }
+    setBtnLoading(true);
+    try {
+      const{error} = await sb.from('contometros').update({status:nuevoEstado}).eq('id',savedId);
+      if(error) throw error;
+      const idx = CONT.findIndex(x=>x.id===savedId);
+      if(idx>=0) CONT[idx].status = nuevoEstado;
+      closeModal(); renderStats(); applyFilters();
+      showToast('✓ Estado actualizado — ' + savedId);
+    } catch(err){
+      showToast('Error: ' + err.message, true);
+    } finally {
+      setBtnLoading(false);
+    }
     return;
   }
 
-  // REGISTRO MANT/CAL
-  const fejec=document.getElementById('m-fejec').value;
-  const fprog=document.getElementById('m-fprog').value||null;
-  if(!fejec){document.getElementById('m-fejec').style.borderColor='var(--red)';return;}
-  const tipo=document.getElementById('m-tipo').value;
-  const periodo=document.getElementById('m-periodo').value;
-  const proveedor=document.getElementById('m-proveedor').value;
-  const obs=document.getElementById('m-obs').value.trim();
-  const adherencia=getAdhLabel();
-  const diasDif=fprog?Math.round((new Date(fejec)-new Date(fprog))/86400000):null;
+  // ── REGISTRO MANT/CAL ────────────────────────────────
+  const fejec = document.getElementById('m-fejec').value;
+  const fprog = document.getElementById('m-fprog').value || null;
+  if(!fejec){ document.getElementById('m-fejec').style.borderColor='var(--red)'; return; }
 
-  btn.disabled=true;btn.innerHTML='<div class="spinner-sm"></div> Guardando...';sync(true);
+  const tipo      = document.getElementById('m-tipo').value;
+  const periodo   = document.getElementById('m-periodo').value;
+  const proveedor = document.getElementById('m-proveedor').value;
+  const obs       = document.getElementById('m-obs').value.trim();
+  const adherencia = getAdhLabel();
+  const diasDif   = fprog ? Math.round((new Date(fejec)-new Date(fprog))/86400000) : null;
 
-  // 1. Insertar registro
-  const{error}=await sb.from('contometros_registros').insert({
-    contometro_id:activeId, centro:c.centro, codigo:c.codigo,
-    tipo_evento:tipo, periodo, proveedor,
-    fecha_programada:fprog||null, fecha_ejecutada:fejec,
-    dias_diferencia:diasDif, adherencia,
-    status_equipo:estadoFinal, observacion:obs, supervisor:sup
-  });
-  if(error){btn.disabled=false;btn.innerHTML='<span id="save-lbl">✓ Guardar registro</span>';showToast('Error: '+error.message,true);sync(false);return;}
+  setBtnLoading(true);
+  try {
+    // 1. Insertar en historial
+    const{error:e1} = await sb.from('contometros_registros').insert({
+      contometro_id:savedId, centro:cont.centro, codigo:cont.codigo,
+      tipo_evento:tipo, periodo, proveedor,
+      fecha_programada:fprog||null, fecha_ejecutada:fejec,
+      dias_diferencia:diasDif, adherencia,
+      status_equipo:estadoFinal, observacion:obs, supervisor:sup
+    });
+    if(e1) throw e1;
 
-  // 2. Actualizar contómetro: fechas y próximas (+6 meses)
-  const fejecDate=new Date(fejec);
-  const proxDate=new Date(fejec);
-  proxDate.setMonth(proxDate.getMonth()+6);
-  const proxStr=proxDate.toISOString().split('T')[0];
+    // 2. Calcular próxima fecha (+6 meses)
+    const proxDate = new Date(fejec);
+    proxDate.setMonth(proxDate.getMonth()+6);
+    const proxStr = proxDate.toISOString().split('T')[0];
 
-  const updateData={status:estadoFinal};
-  if(tipo.includes('mantenimiento')){ updateData.ult_mantenimiento=fejec; updateData.prox_mantenimiento=proxStr; }
-  if(tipo.includes('calibracion'))  { updateData.ult_calibracion=fejec;  updateData.prox_calibracion=proxStr; }
+    const updateData = {status:estadoFinal};
+    if(tipo.includes('mantenimiento')){ updateData.ult_mantenimiento=fejec; updateData.prox_mantenimiento=proxStr; }
+    if(tipo.includes('calibracion'))  { updateData.ult_calibracion=fejec;  updateData.prox_calibracion=proxStr; }
 
-  await sb.from('contometros').update(updateData).eq('id',activeId);
+    const{error:e2} = await sb.from('contometros').update(updateData).eq('id',savedId);
+    if(e2) throw e2;
 
-  // Actualizar local
-  const idx=CONT.findIndex(x=>x.id===activeId);
-  if(idx>=0){ Object.assign(CONT[idx],updateData); }
-  allRegs.unshift({contometro_id:activeId,centro:c.centro,codigo:c.codigo,tipo_evento:tipo,periodo,fecha_programada:fprog,fecha_ejecutada:fejec,dias_diferencia:diasDif,adherencia,status_equipo:estadoFinal,observacion:obs,supervisor:sup,created_at:new Date().toISOString()});
+    // 3. Actualizar estado local
+    const idx = CONT.findIndex(x=>x.id===savedId);
+    if(idx>=0) Object.assign(CONT[idx], updateData);
+    allRegs.unshift({
+      contometro_id:savedId, centro:cont.centro, codigo:cont.codigo,
+      tipo_evento:tipo, periodo, fecha_programada:fprog,
+      fecha_ejecutada:fejec, dias_diferencia:diasDif,
+      adherencia, status_equipo:estadoFinal,
+      observacion:obs, supervisor:sup,
+      created_at:new Date().toISOString()
+    });
 
-  sync(false); closeModal(); renderStats(); applyFilters();
-  showToast(`✓ Registrado — ${activeId} · ${adherencia}`);
+    closeModal(); renderStats(); applyFilters();
+    showToast('✓ Registrado — ' + savedId + ' · ' + adherencia);
+
+  } catch(err){
+    showToast('Error al guardar: ' + err.message, true);
+  } finally {
+    setBtnLoading(false);
+  }
 }
 
 function showToast(msg,err=false){
