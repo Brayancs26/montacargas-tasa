@@ -893,9 +893,23 @@ async function submitForm(){
     document.getElementById('block-sub').innerHTML=
       `<strong style="color:var(--red);">${critMal.length} ítem(s) CRÍTICO(S) fallado(s).</strong><br>El equipo NO puede operar hasta levantar las observaciones.`;
 
+    // WhatsApp supervisor por CD
+    const supervisores = {
+      'Matarani': '51983840664',
+      // Agregar más CDs: 'Callao': '51XXXXXXXXX',
+    };
+    const numSup = supervisores[UNIT.cd] || '';
+
     // WhatsApp link
     const msg=`🚫 *ALERTA EQUIPO BLOQUEADO*\n\n*Placa:* ${UNIT.placa}\n*CD:* ${UNIT.cd}\n*Operador:* ${document.getElementById('f-operador').value}\n*Turno:* ${document.getElementById('f-turno').value}\n*Fecha:* ${now.toLocaleDateString('es-PE')}\n\n*Ítems críticos fallados:*\n${critMal.map(i=>`• ${i.id}: ${i.txt}`).join('\n')}\n\n*ID Registro:* ${recordId}\n\n⚠ El equipo NO puede operar hasta levantar las observaciones.`;
-    document.getElementById('wsp-link').href='https://wa.me/?text='+encodeURIComponent(msg);
+    const wspUrl = numSup
+      ? 'https://wa.me/' + numSup + '?text=' + encodeURIComponent(msg)
+      : 'https://wa.me/?text=' + encodeURIComponent(msg);
+    document.getElementById('wsp-link').href = wspUrl;
+    // Also update button text to show if number is configured
+    if(numSup){
+      document.getElementById('wsp-link').innerHTML = document.getElementById('wsp-link').innerHTML.replace('Notificar supervisor por WhatsApp','📲 Notificar supervisor · Matarani');
+    }
   }
 }
 
