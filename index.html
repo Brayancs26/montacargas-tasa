@@ -104,6 +104,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:1
     <div class="hstat"><div class="hstat-num" style="color:#60a5fa;">33</div><div class="hstat-lbl">Equipos</div></div>
     <div class="hstat"><div class="hstat-num" style="color:var(--green);">7</div><div class="hstat-lbl">CDs activos</div></div>
     <div class="hstat"><div class="hstat-num" style="color:var(--amber);">5</div><div class="hstat-lbl">Módulos</div></div>
+    <div class="hstat"><div class="hstat-num" id="kpi-operatividad" style="color:var(--green);">—</div><div class="hstat-lbl">% Operatividad</div></div>
   </div>
 </div>
 
@@ -221,9 +222,42 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:1
   <div class="footer-copy" id="fecha-footer"></div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script>
+const _sb = supabase.createClient(
+  'https://njmswjinwrcxsfduchsc.supabase.co',
+  'sb_publishable_KKD-gJzg0Urws7ff-h5XFg_91sL146J'
+);
+
+async function cargarOperatividad(){
+  try {
+    // Montacargas: operativos / total
+    const{data:eq}  = await _sb.from('equipos').select('status');
+    // Balanzas: operativas / total
+    const{data:bal} = await _sb.from('balanzas').select('status');
+    // Contómetros: operativos / total
+    const{data:cont}= await _sb.from('contometros').select('status');
+
+    const pct = (arr) => {
+      if(!arr||!arr.length) return null;
+      return Math.round(arr.filter(x=>x.status==='Operativo').length / arr.length * 100);
+    };
+
+    const pcts = [pct(eq), pct(bal), pct(cont)].filter(x=>x!==null);
+    if(!pcts.length) return;
+
+    const promedio = Math.round(pcts.reduce((a,b)=>a+b,0) / pcts.length);
+    const el = document.getElementById('kpi-operatividad');
+    if(el){
+      el.textContent = promedio + '%';
+      el.style.color = promedio>=90?'var(--green)':promedio>=70?'var(--amber)':'var(--red)';
+    }
+  } catch(e){ console.warn('KPI operatividad:', e.message); }
+}
+
 document.getElementById('fecha-footer').textContent =
   new Date().toLocaleDateString('es-PE',{weekday:'long',day:'2-digit',month:'long',year:'numeric'});
+cargarOperatividad();
 </script>
 </body>
 </html>
