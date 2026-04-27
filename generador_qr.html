@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MaquiLog — Generador de QR Checklist</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400&display=swap');
+:root{--bg:#0a1628;--surf:#111e33;--surf2:#182540;--bord:rgba(255,255,255,0.07);--bord2:rgba(255,255,255,0.13);--accent:#2563eb;--green:#10b981;--text:#e2e8f0;--text2:#7a8fa8;--text3:#445566;--mono:'IBM Plex Mono',monospace;--sans:'IBM Plex Sans',sans-serif;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:100vh;padding-bottom:40px;}
+.header{background:var(--surf);border-bottom:1px solid var(--bord2);padding:0 24px;}
+.header-inner{max-width:1100px;margin:0 auto;display:flex;align-items:center;gap:14px;height:58px;}
+.logo{width:32px;height:32px;border-radius:8px;background:var(--accent);display:flex;align-items:center;justify-content:center;}
+.logo svg{width:17px;height:17px;}
+h1{font-size:15px;font-weight:600;}
+.sub{font-size:11px;color:var(--text2);font-family:var(--mono);}
+.main{max-width:1100px;margin:0 auto;padding:24px;}
+.toolbar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px;align-items:center;}
+.filter-select{background:var(--surf);border:1px solid var(--bord2);border-radius:8px;color:var(--text);font-family:var(--sans);font-size:13px;padding:7px 28px 7px 10px;appearance:none;outline:none;cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%237a8fa8'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;}
+.btn-print{background:var(--accent);color:white;border:none;border-radius:8px;padding:8px 18px;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--sans);}
+.btn-print:hover{background:#1d4ed8;}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px;}
+.qr-card{background:var(--surf);border:1px solid var(--bord);border-radius:12px;padding:16px;text-align:center;}
+.qr-label{font-family:var(--mono);font-size:14px;font-weight:500;color:var(--green);margin-bottom:4px;}
+.qr-sub{font-size:11px;color:var(--text2);margin-bottom:10px;}
+.qr-box{background:white;border-radius:8px;padding:10px;display:inline-block;margin-bottom:10px;}
+.qr-cd{font-size:10px;color:var(--text3);font-family:var(--mono);margin-top:4px;}
+.qr-url{font-size:9px;color:var(--text3);word-break:break-all;margin-top:6px;display:none;}
+/* PRINT */
+@media print{
+  body{background:white;color:black;padding:0;}
+  .header,.toolbar{display:none!important;}
+  .main{padding:0;}
+  .grid{grid-template-columns:repeat(4,1fr);gap:8px;}
+  .qr-card{background:white;border:1px solid #ccc;border-radius:8px;padding:10px;break-inside:avoid;}
+  .qr-label{color:#0a7c5c;}
+  .qr-sub{color:#555;}
+  .qr-cd{color:#888;}
+  .qr-url{display:block;color:#aaa;font-size:8px;}
+  .qr-box{padding:6px;}
+}
+</style>
+</head>
+<body>
+<div class="header">
+  <div class="header-inner">
+    <div class="logo"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg></div>
+    <div><div style="font-size:15px;font-weight:600;">Generador de QR — Checklist Montacargas</div><div style="font-size:11px;color:var(--text2);font-family:var(--mono);">Imprime y pega en cada equipo</div></div>
+  </div>
+</div>
+
+<div class="main">
+  <div class="toolbar">
+    <select class="filter-select" id="f-cd" onchange="renderQRs()">
+      <option value="">Todos los CDs</option>
+      <option>Callao</option><option>Chimbote</option><option>Malabrigo</option>
+      <option>Matarani</option><option>Pisco</option><option>Pucusana</option><option>Vegueta</option>
+    </select>
+    <span style="font-size:12px;color:var(--text2);" id="cnt-label"></span>
+    <button class="btn-print" onclick="window.print()">🖨 Imprimir QRs</button>
+  </div>
+  <div class="grid" id="qr-grid"></div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script>
+const EQUIPOS = [
+  {id:"ABAST 01",codigo:"ABAST 01",placa:"",cd:"Callao",marca:"TOYOTA",modelo:"2.5TM",comb:"Dual (GLP/Gasolina)",url:"https://brayancs26.github.io/montacargas-tasa/checklist.html?placa=ABAST+01&codigo=ABAST+01&marca=TOYOTA&modelo=2.5TM&cap=2.0TM&cd=Callao&comb=Dual+%28GLP%2FGasolina%29"},
+  {id:"ABAST 02",codigo:"ABAST 02",placa:"FP08HA4224",cd:"Callao",marca:"TOYOTA",modelo:"3TM",comb:"Dual (GLP/Gasolina)",url:"https://brayancs26.github.io/montacargas-tasa/checklist.html?placa=FP08HA4224&codigo=ABAST+02&marca=TOYOTA&modelo=3TM&cap=3.0TM&cd=Callao&comb=Dual+%28GLP%2FGasolina%29"},
+  {id:"PPTT 02",codigo:"PPTT 02",placa:"FP08HA00173",cd:"Callao",marca:"CAT",modelo:"PD 9000",comb:"Petróleo Diesel",url:"https://brayancs26.github.io/montacargas-tasa/checklist.html?placa=FP08HA00173&codigo=PPTT+02&marca=CAT&modelo=PD+9000&cap=4.0TM&cd=Callao&comb=Petr%C3%B3leo+Diesel"},
+  {id:"PPTT14",codigo:"PPTT14",placa:"TASA-21271",cd:"Pisco",marca:"HYUNDAI",modelo:"50L-9",comb:"Gas GLP",url:"https://brayancs26.github.io/montacargas-tasa/checklist.html?placa=TASA-21271&codigo=PPTT14&marca=HYUNDAI&modelo=50L-9&cap=4.5TM&cd=Pisco&comb=Gas+GLP"},
+  {id:"TASA-09694",codigo:"",placa:"TASA-09694",cd:"Callao",marca:"CROWN",modelo:"RM6025-45",comb:"Eléctrico",url:"https://brayancs26.github.io/montacargas-tasa/checklist.html?placa=TASA-09694&codigo=&marca=CROWN&modelo=RM6025-45&cap=2.0TM&cd=Callao&comb=El%C3%A9ctrico"},
+  {id:"TASA-09693",codigo:"",placa:"TASA-09693",cd:"Callao",marca:"CROWN",modelo:"RM6025-45",comb:"Eléctrico",url:"https://brayancs26.github.io/montacargas-tasa/checklist.html?placa=TASA-09693&codigo=&marca=CROWN&modelo=RM6025-45&cap=2.0TM&cd=Callao&comb=El%C3%A9ctrico"},
+  {id:"TASA-16035",codigo:"",placa:"TASA-16035",cd:"Callao",marca:"CROWN",modelo:"RR5725-45",comb:"Eléctrico",url:"https://brayancs26.github.io/montacargas-tasa/checklist.html?placa=TASA-16035&codigo=&marca=CROWN&modelo=RR5725-45&cap=2.0TM&cd=Callao&comb=El%C3%A9ctrico"},
+  {id:"TASA-16038",codigo:"",placa:"TASA-16038",cd:"Callao",marca:"CROWN",modelo:"RR5725-45",comb:"Eléctrico",url:"https://brayancs26.github.io/montacargas-tasa/checklist.html?placa=TASA-16038&codigo=&marca=CROWN&modelo=RR5725-45&cap=2.0TM&cd=Callao&comb=El%C3%A9ctrico"},
+  {id:"MPE-00585",codigo:"",placa:"MPE-00585",cd:"Callao",marca:"LINDE",modelo:"E20PH",comb:"Eléctrico",url:"https://brayancs26.github.io/montacargas-tasa/checklist.html?placa=MPE-00585&codigo=&marca=LINDE&modelo=E20PH&cap=2.0TM&cd=Callao&comb=El%C3%A9ctrico"},
+  {id:"MPE-00587",codigo:"",placa:"MPE-00587",cd:"Callao",marca:"LINDE",modelo:"E20PH",comb:"Eléctrico",url:"https://brayancs26.github.io/montacargas-tasa/checklist.html?placa=MPE-00587&codigo=&marca=LINDE&modelo=E20PH&cap=2.0TM&cd=Callao&comb=El%C3%A9ctrico"},
+  {id:"TASA-18851",codigo:"",placa:"TASA-18851",cd:"Callao",marca:"CROWN",modelo:"WT-3020",comb:"Eléctrico",url:"https://brayancs26.github.io/montacargas-tasa/checklist.html?placa=TASA-18851&codigo=&marca=CROWN&modelo=WT-3020&cap=2.0TM&cd=Callao&comb=El%C3%A9ctrico"},
+  {id:"TASA-10070",codigo:"",placa:"TASA-10070",cd:"Callao",marca:"CROWN",modelo:"SC-5245-40",comb:"Eléctrico",url:"https://brayancs26.github.io/montacargas-tasa/checklist.html?placa=TASA-10070&codigo=&marca=CROWN&modelo=SC-5245-40&cap=2.0TM&cd=Callao&comb=El%C3%A9ctrico"},
+  {id:"TASA-10089",codigo:"",placa:"TASA-10089",cd:"Callao",marca:"CROWN",modelo:"WT-3020",comb:"Eléctrico",url:"https://brayancs26.github.io/montacargas-tasa/checklist.html?placa=TASA-10089&codigo=&marca=CROWN&modelo=WT-3020&cap=2.0TM&cd=Callao&comb=El%C3%A9ctrico"},
+  {id:"TASA-16140",codigo:"",placa:"TASA-16140",cd:"Callao",marca:"LINDE",modelo:"E20PH",comb:"Eléctrico",url:"https://brayancs26.github.io/montacargas-tasa/checklist.html?placa=TASA-16140&codigo=&marca=LINDE&modelo=E20PH&cap=2.0TM&cd=Callao&comb=El%C3%A9ctrico"},
+  {id:"TASA-22809",codigo:"",placa:"TASA-22809",cd:"Callao",marca:"TOYOTA",modelo:"8FB-25",comb:"Eléctrico",url:"https://brayancs26.github.io/montacargas-tasa/checklist.html?placa=TASA-22809&codigo=&marca=TOYOTA&modelo=8FB-25&cap=2.0TM&cd=Callao&comb=El%C3%A9ctrico"},
+  {id:"TASA-25454",codigo:"",placa:"TASA-25454",cd:"Callao",marca:"TOYOTA",modelo:"8FB-25",comb:"Eléctrico",url:"https://brayancs26.github.io/montacargas-tasa/checklist.html?placa=TASA-25454&codigo=&marca=TOYOTA&modelo=8FB-25&cap=2.0TM&cd=Callao&comb=El%C3%A9ctrico"},
+  {id:"MPE-00771",codigo:"",placa:"MPE-00771",cd:"Pucusana",marca:"TOYOTA",modelo:"8FBCU25",comb:"Eléctrico",url:"https://brayancs26.github.io/montacargas-tasa/checklist.html?placa=MPE-00771&codigo=&marca=TOYOTA&modelo=8FBCU25&cap=2.0TM&cd=Pucusana&comb=El%C3%A9ctrico"},
+  {id:"ABAST 03",codigo:"ABAST 03",placa:"",cd:"Callao",marca:"",modelo:"2TM",comb:"Eléctrico",url:"https://brayancs26.github.io/montacargas-tasa/checklist.html?placa=ABAST+03&codigo=ABAST+03&marca=&modelo=2TM&cap=&cd=Callao&comb=El%C3%A9ctrico"},
+  {id:"ABAST 04",codigo:"ABAST 04",placa:"TASA-12340",cd:"Callao",marca:"CAT",modelo:"12",comb:"Gas GLP",url:"https://brayancs26.github.io/montacargas-tasa/checklist.html?placa=TASA-12340&codigo=ABAST+04&marca=CAT&modelo=12&cap=2.5TM&cd=Callao&comb=Gas+GLP"},
+  {id:"ABAST 05",codigo:"ABAST 05",placa:"",cd:"Callao",marca:"TOYOTA",modelo:"2TM",comb:"Petróleo Diesel",url:"https://brayancs26.github.io/montacargas-tasa/checklist.html?placa=ABAST+05&codigo=ABAST+05&marca=TOYOTA&modelo=2TM&cap=2.0TM&cd=Callao&comb=Petr%C3%B3leo+Diesel"},
+  {id:"ABAST 06",codigo:"ABAST 06",placa:"TASA-16105",cd:"Chimbote",marca:"TOYOTA",modelo:"",comb:"Dual (GLP/Gasolina)",url:"https://brayancs26.github.io/montacargas-tasa/checklist.html?placa=TASA-16105&codigo=ABAST+06&marca=TOYOTA&modelo=&cap=3.0TM&cd=Chimbote&comb=Dual+%28GLP%2FGasolina%29"},
+  {id:"ABAST 07",codigo:"ABAST 07",placa:"",cd:"Chimbote",marca:"UNION BULL",modelo:"CDD1545h",comb:"Eléctrico",url:"https://brayancs26.github.io/montacargas-tasa/checklist.html?placa=ABAST+07&codigo=ABAST+07&marca=UNION+BULL&modelo=CDD1545h&cap=1.5TM&cd=Chimbote&comb=El%C3%A9ctrico"},
+  {id:"ABAST 08",codigo:"ABAST 08",placa:"TASA-16120",cd:"Malabrigo",marca:"TOYOTA",modelo:"FSVE62",comb:"Gasolina",url:"https://brayancs26.github.io/montacargas-tasa/checklist.html?placa=TASA-16120&codigo=ABAST+08&marca=TOYOTA&modelo=FSVE62&cap=3.0TM&cd=Malabrigo&comb=Gasolina"},
+  {id:"ABAST 09",codigo:"ABAST 09",placa:"",cd:"Malabrigo",marca:"UNION BULL",modelo:"CDD15M",comb:"Eléctrico",url:"https://brayancs26.github.io/montacargas-tasa/checklist.html?placa=ABAST+09&codigo=ABAST+09&marca=UNION+BULL&modelo=CDD15M&cap=1.5TM&cd=Malabrigo&comb=El%C3%A9ctrico"},
+  {id:"PPTT 03",codigo:"PPTT 03",placa:"FP08HA0406",cd:"Callao",marca:"Yale",modelo:"GLP090VXNGAE86",comb:"Gas GLP",url:"https://brayancs26.github.io/montacargas-tasa/checklist.html?placa=FP08HA0406&codigo=PPTT+03&marca=Yale&modelo=GLP090VXNGAE86&cap=4.5TM&cd=Callao&comb=Gas+GLP"},
+  {id:"PPTT 04",codigo:"PPTT 04",placa:"FP08HA0405",cd:"Callao",marca:"Yale",modelo:"GLP090VXNGAE86",comb:"Gas GLP",url:"https://brayancs26.github.io/montacargas-tasa/checklist.html?placa=FP08HA0405&codigo=PPTT+04&marca=Yale&modelo=GLP090VXNGAE86&cap=4.5TM&cd=Callao&comb=Gas+GLP"},
+  {id:"PPTT 07",codigo:"PPTT 07",placa:"TASA-01546",cd:"Callao",marca:"CAT",modelo:"P 9000",comb:"Gas GLP",url:"https://brayancs26.github.io/montacargas-tasa/checklist.html?placa=TASA-01546&codigo=PPTT+07&marca=CAT&modelo=P+9000&cap=4.0TM&cd=Callao&comb=Gas+GLP"},
+  {id:"PPTT 10",codigo:"PPTT 10",placa:"FP13HA2348",cd:"Vegueta",marca:"CAT",modelo:"P 9000",comb:"Gas GLP",url:"https://brayancs26.github.io/montacargas-tasa/checklist.html?placa=FP13HA2348&codigo=PPTT+10&marca=CAT&modelo=P+9000&cap=4.0TM&cd=Vegueta&comb=Gas+GLP"},
+  {id:"PPTT 11",codigo:"PPTT 11",placa:"FS22HA0890",cd:"Chimbote",marca:"CAT",modelo:"P-9000",comb:"Gas GLP",url:"https://brayancs26.github.io/montacargas-tasa/checklist.html?placa=FS22HA0890&codigo=PPTT+11&marca=CAT&modelo=P-9000&cap=4.0TM&cd=Chimbote&comb=Gas+GLP"},
+  {id:"ABAST 10",codigo:"ABAST 10",placa:"TASA-16119",cd:"Vegueta",marca:"TOYOTA",modelo:"",comb:"Gasolina",url:"https://brayancs26.github.io/montacargas-tasa/checklist.html?placa=TASA-16119&codigo=ABAST+10&marca=TOYOTA&modelo=&cap=3.0TM&cd=Vegueta&comb=Gasolina"},
+  {id:"PPTT 06",codigo:"PPTT 06",placa:"FS18HA0900",cd:"Matarani",marca:"CAT",modelo:"PD 9000",comb:"Petróleo Diesel",url:"https://brayancs26.github.io/montacargas-tasa/checklist.html?placa=FS18HA0900&codigo=PPTT+06&marca=CAT&modelo=PD+9000&cap=4.0TM&cd=Matarani&comb=Petr%C3%B3leo+Diesel"},
+  {id:"PPTT13",codigo:"PPTT13",placa:"TASA-14944",cd:"Malabrigo",marca:"HYUNDAI",modelo:"50D-9SA",comb:"Petróleo Diesel",url:"https://brayancs26.github.io/montacargas-tasa/checklist.html?placa=TASA-14944&codigo=PPTT13&marca=HYUNDAI&modelo=50D-9SA&cap=5.0TM&cd=Malabrigo&comb=Petr%C3%B3leo+Diesel"}
+];
+
+function renderQRs(){
+  const cd = document.getElementById('f-cd').value;
+  const filtered = cd ? EQUIPOS.filter(e=>e.cd===cd) : EQUIPOS;
+  document.getElementById('cnt-label').textContent = filtered.length + ' equipos';
+  const grid = document.getElementById('qr-grid');
+  grid.innerHTML = '';
+
+  filtered.forEach(e=>{
+    const label = e.codigo || e.placa || e.id;
+    const sub   = [e.marca, e.modelo].filter(Boolean).join(' ') || '—';
+
+    const card = document.createElement('div');
+    card.className = 'qr-card';
+    card.innerHTML = `
+      <div class="qr-label">${label}</div>
+      <div class="qr-sub">${sub}</div>
+      <div class="qr-box" id="qr-${label.replace(/[^a-zA-Z0-9]/g,'_')}"></div>
+      <div class="qr-cd">${e.cd} · ${e.comb}</div>
+      <div class="qr-url">${e.url}</div>`;
+    grid.appendChild(card);
+
+    setTimeout(()=>{
+      const qrDiv = document.getElementById('qr-'+label.replace(/[^a-zA-Z0-9]/g,'_'));
+      if(qrDiv) new QRCode(qrDiv,{text:e.url,width:180,height:180,colorDark:'#0a1628',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.M});
+    },50);
+  });
+}
+
+window.addEventListener('DOMContentLoaded', renderQRs);
+</script>
+</body>
+</html>
