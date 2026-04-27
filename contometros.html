@@ -483,10 +483,11 @@ function openModal(id){
       hist.map(r=>`<tr><td>${r.periodo||'—'}</td><td style="color:var(--text2)">${r.tipo_evento||'—'}</td><td>${fD(r.fecha_ejecutada)}</td><td><span class="adh ${adhCls(r.adherencia)}">${r.adherencia||'—'}</span></td></tr>`).join('')+'</tbody></table>';
   }else{hl.style.display='none';hc.innerHTML='';}
 
-  document.getElementById('overlay').classList.add('open');
+  const ov = document.getElementById('overlay');
+  ov.style.display = '';  // restaurar display antes de abrir
+  ov.classList.add('open');
   document.body.style.overflow='hidden';
-  document.getElementById('btn-save').disabled=false;
-  document.getElementById('save-lbl').textContent='✓ Guardar estado';
+  setBtnLoading(false);
 }
 
 function setTab(tab){
@@ -530,9 +531,14 @@ function getAdhLabel(){
 }
 
 function closeModal(){
-  document.getElementById('overlay').classList.remove('open');
-  document.body.style.overflow='';
-  activeId=null;
+  const ov = document.getElementById('overlay');
+  ov.classList.remove('open');
+  ov.style.display = 'none';           // forzar cierre
+  setTimeout(()=>{ ov.style.display=''; }, 50); // restaurar para próxima apertura
+  document.body.style.overflow = '';
+  activeId = null;
+  nuevoEstado = null;
+  modoTab = 'estado';
   setBtnLoading(false);
 }
 
