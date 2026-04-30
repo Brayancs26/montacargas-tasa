@@ -363,14 +363,38 @@ async function cargarDatos() {
     if (e1) throw e1;
     EQUIPOS = eq;
 
-    // Cargar mantenimientos del mes
+    // Cargar registros horómetros del mes (tabla horometros_registros)
+    const { data: horoRegs, error: e2 } = await sb.from('horometros_registros')
+      .select('equipo_id,horometro,fecha_lectura,cd,codigo')
+      .eq('mes', mes)
+      .eq('anio', anio);
+
+    // Cargar mantenimientos del mes (también cuentan como actualización)
     const fechaIni = `${anio}-${String(mes).padStart(2,'0')}-01`;
     const fechaFin = `${anio}-${String(mes).padStart(2,'0')}-31`;
-    const { data: mants, error: e2 } = await sb.from('mantenimientos')
+    const { data: mants, error: e3 } = await sb.from('mantenimientos')
       .select('equipo_id,horometro,fecha_mantenimiento')
       .gte('fecha_mantenimiento', fechaIni)
       .lte('fecha_mantenimiento', fechaFin);
+
+    // Unir ambas fuentes: un equipo "actualizó" si tiene registro en cualquiera
+    const equiposConHoro = new Set([
+      ...(horoRegs||[]).map(r => r.equipo_id),
+      ...(mants||[]).map(m => m.equipo_id)
+    ]);
+    // Guardar último horómetro del mes por equipo (de cualquier fuente)
+    const horoDelMes = {};
+    (horoRegs||[]).forEach(r => {
+      if(!horoDelMes[r.equipo_id] || r.horometro > horoDelMes[r.equipo_id].horometro)
+        horoDelMes[r.equipo_id] = {horometro: r.horometro, fecha: r.fecha_lectura};
+    });
+    (mants||[]).forEach(m => {
+      if(!horoDelMes[m.equipo_id] || m.horometro > horoDelMes[m.equipo_id].horometro)
+        horoDelMes[m.equipo_id] = {horometro: m.horometro, fecha: m.fecha_mantenimiento};
+    });
     MANTS = mants || [];
+    window._equiposConHoro = equiposConHoro;
+    window._horoDelMes = horoDelMes;
 
     const meses = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
     document.getElementById('hdr-sub').textContent = `MaquiLog · Control horómetros · ${meses[mes-1]} ${anio}`;
@@ -398,15 +422,26 @@ function renderDashboard() {
   const equiposMont = equiposFiltro.filter(e => e.tipo === 'Montacargas' || e.tipo === 'Apilador' || e.tipo === 'Traspaleta' || !e.tipo || true);
 
   function actualizoEnMes(eq) {
-    // Tiene mantenimiento en el mes
-    const tieneMant = MANTS.some(m => m.equipo_id === eq.id);
-    if (tieneMant) return true;
-    // O su fecha_ultimo_mant cae en el mes
+    // Usa el set pre-calculado con ambas fuentes (horometros_registros + mantenimientos)
+    if (window._equiposConHoro && window._equiposConHoro.has(eq.id)) return true;
+    // Fallback: fecha_ultimo_mant en el mes (por si los datos aún no tienen historial)
     if (eq.fecha_ultimo_mant) {
       const f = new Date(eq.fecha_ultimo_mant + 'T12:00:00');
       if (f.getMonth() + 1 === mes && f.getFullYear() === anio) return true;
     }
     return false;
+  }
+
+  function getHoroMes(eq) {
+    if (window._horoDelMes && window._horoDelMes[eq.id])
+      return window._horoDelMes[eq.id].horometro + ' hrs';
+    return eq.horometro_ultimo_mant ? parseFloat(eq.horometro_ultimo_mant)+' hrs' : '—';
+  }
+
+  function getFechaMes(eq) {
+    if (window._horoDelMes && window._horoDelMes[eq.id])
+      return fD(window._horoDelMes[eq.id].fecha);
+    return fD(eq.fecha_ultimo_mant);
   }
 
   const okList   = equiposMont.filter(e => actualizoEnMes(e));
@@ -459,8 +494,8 @@ function renderDashboard() {
     <tr>
       <td>${e.codigo||e.placa||e.id}</td>
       <td>${e.cd||'—'}</td>
-      <td>${e.horometro_ultimo_mant ? parseFloat(e.horometro_ultimo_mant)+' hrs' : '—'}</td>
-      <td>${fD(e.fecha_ultimo_mant)}</td>
+      <td>${getHoroMes(e)}</td>
+      <td>${getFechaMes(e)}</td>
     </tr>`).join('');
   document.getElementById('cnt-ok').textContent = okList.length;
 
@@ -470,7 +505,7 @@ function renderDashboard() {
       <td>${e.codigo||e.placa||e.id}</td>
       <td style="color:var(--red)">${e.cd||'—'}</td>
       <td>${e.horometro_ultimo_mant ? parseFloat(e.horometro_ultimo_mant)+' hrs' : '—'}</td>
-      <td style="color:var(--text3)">${fD(e.fecha_ultimo_mant)||'Sin registro'}</td>
+      <td style="color:var(--text3)">Sin registro en el mes</td>
     </tr>`).join('');
   document.getElementById('cnt-pend').textContent = pendList.length;
 
@@ -483,8 +518,8 @@ function renderDashboard() {
       <td style="color:var(--text2)">${e.tipo||'—'}</td>
       <td>${e.cd||'—'}</td>
       <td>${e.marca||'—'}</td>
-      <td>${e.horometro_ultimo_mant ? parseFloat(e.horometro_ultimo_mant)+' hrs' : '—'}</td>
-      <td>${fD(e.fecha_ultimo_mant)}</td>
+      <td>${getHoroMes(e)}</td>
+      <td>${getFechaMes(e)}</td>
       <td><span class="badge ${ok?'b-ok':'b-pend'}">${ok?'✓ Al día':'✗ Pendiente'}</span></td>
     </tr>`;
   }).join('');
