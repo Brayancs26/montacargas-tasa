@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="theme-color" content="#0a1628">
+<title>MaquiLog — Control</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap');
+:root{
+  --bg:#0a1628;--surf:#111e33;--surf2:#182540;--surf3:#1e2e4a;
+  --bord:rgba(255,255,255,0.07);--bord2:rgba(255,255,255,0.13);
+  --accent:#2563eb;--green:#10b981;--amber:#f59e0b;--red:#ef4444;--purple:#8b5cf6;
+  --text:#e2e8f0;--text2:#7a8fa8;--text3:#445566;
+  --mono:'IBM Plex Mono',monospace;--sans:'IBM Plex Sans',sans-serif;
+  --r:12px;--r-sm:8px;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:100vh;}
+.sync-bar{height:3px;background:var(--purple);position:fixed;top:0;left:0;right:0;z-index:999;display:none;}
+.sync-bar.on{display:block;animation:sb 1.4s ease-in-out infinite;}
+@keyframes sb{0%{transform:scaleX(0);transform-origin:left}50%{transform:scaleX(1);transform-origin:left}51%{transform:scaleX(1);transform-origin:right}100%{transform:scaleX(0);transform-origin:right}}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);border-radius:10px;padding:11px 20px;font-size:13px;font-weight:500;z-index:9999;display:none;white-space:nowrap;}
+.toast.show{display:block;}.toast.ok{background:var(--green);color:#0a1628;}.toast.err{background:var(--red);color:white;}
+
+/* ══ LOCK SCREEN ══ */
+.lock-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;}
+.lock-card{background:var(--surf);border:1px solid var(--bord2);border-radius:20px;padding:36px 28px;width:100%;max-width:360px;text-align:center;}
+.lock-icon{width:64px;height:64px;border-radius:16px;background:rgba(139,92,246,0.15);border:1px solid rgba(139,92,246,0.3);display:flex;align-items:center;justify-content:center;margin:0 auto 20px;}
+.lock-title{font-size:20px;font-weight:600;color:var(--text);margin-bottom:6px;}
+.lock-sub{font-size:13px;color:var(--text2);margin-bottom:28px;}
+.pin-dots{display:flex;gap:12px;justify-content:center;margin-bottom:24px;}
+.pin-dot{width:14px;height:14px;border-radius:50%;border:2px solid var(--bord2);transition:all 0.15s;}
+.pin-dot.filled{background:var(--purple);border-color:var(--purple);}
+.pin-pad{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:12px;}
+.pin-btn{background:var(--surf2);border:1px solid var(--bord);border-radius:var(--r);height:56px;font-size:20px;font-weight:600;color:var(--text);cursor:pointer;transition:all 0.12s;display:flex;align-items:center;justify-content:center;}
+.pin-btn:active{transform:scale(0.93);background:var(--surf3);}
+.pin-btn.del{font-size:16px;color:var(--text2);}
+.pin-btn.zero{grid-column:2;}
+.pin-error{color:var(--red);font-size:12px;margin-top:8px;display:none;}
+.pin-error.show{display:block;}
+@keyframes shake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-8px)}40%,80%{transform:translateX(8px)}}
+.lock-card.shake{animation:shake 0.4s ease;}
+.btn-back-lock{display:flex;align-items:center;gap:6px;background:transparent;border:1px solid var(--bord2);border-radius:var(--r-sm);padding:8px 14px;font-size:12px;color:var(--text2);cursor:pointer;font-family:var(--sans);margin:0 auto;margin-top:4px;}
+
+/* ══ APP ══ */
+.app{display:none;}
+
+/* HEADER */
+.header{background:var(--surf);border-bottom:1px solid var(--bord2);padding:0 20px;position:sticky;top:0;z-index:100;}
+.header-inner{max-width:1000px;margin:0 auto;display:flex;align-items:center;gap:12px;height:58px;}
+.logo{width:34px;height:34px;border-radius:9px;background:rgba(139,92,246,0.2);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.header-title{font-size:15px;font-weight:600;}
+.header-sub{font-size:11px;color:var(--text2);margin-top:1px;font-family:var(--mono);}
+
+/* PERIOD BAR */
+.period-bar{background:var(--surf2);border-bottom:1px solid var(--bord);padding:8px 20px;}
+.period-inner{max-width:1000px;margin:0 auto;display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+.period-label{font-size:12px;color:var(--text2);}
+.period-select{background:var(--surf);border:1px solid var(--bord2);border-radius:var(--r-sm);color:var(--text);font-family:var(--sans);font-size:13px;font-weight:500;padding:5px 28px 5px 10px;outline:none;cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%237a8fa8'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;}
+.period-select:focus{border-color:var(--purple);}
+.btn-refresh{background:var(--accent);color:white;border:none;border-radius:var(--r-sm);padding:6px 14px;font-size:12px;font-weight:600;cursor:pointer;font-family:var(--sans);display:flex;align-items:center;gap:5px;}
+.btn-refresh:hover{background:#1d4ed8;}
+.logout-btn{margin-left:auto;background:transparent;border:1px solid var(--bord2);border-radius:var(--r-sm);padding:5px 12px;font-size:11px;color:var(--text3);cursor:pointer;font-family:var(--sans);}
+
+/* MAIN */
+.main{max-width:1000px;margin:0 auto;padding:20px;}
+
+/* KPI ROW */
+.kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px;}
+.kpi-card{background:var(--surf);border:1px solid var(--bord);border-radius:var(--r);padding:14px 16px;}
+.kpi-num{font-size:28px;font-weight:600;font-family:var(--mono);line-height:1;}
+.kpi-lbl{font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:var(--text2);margin-top:4px;}
+.kpi-sub{font-size:10px;color:var(--text3);margin-top:2px;}
+.kpi-green .kpi-num{color:var(--green);}
+.kpi-amber .kpi-num{color:var(--amber);}
+.kpi-red .kpi-num{color:var(--red);}
+.kpi-purple .kpi-num{color:var(--purple);}
+
+/* SECTION */
+.sec-title{font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--text3);margin:0 0 12px;display:flex;align-items:center;gap:8px;}
+.sec-title::after{content:'';flex:1;height:1px;background:var(--bord2);}
+
+/* PLANT GRID */
+.plant-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;margin-bottom:20px;}
+.plant-card{background:var(--surf);border:1px solid var(--bord);border-radius:var(--r);padding:14px 16px;transition:border-color 0.15s;}
+.plant-card.completo{border-color:rgba(16,185,129,0.4);background:rgba(16,185,129,0.04);}
+.plant-card.parcial{border-color:rgba(245,158,11,0.4);background:rgba(245,158,11,0.03);}
+.plant-card.pendiente{border-color:rgba(239,68,68,0.35);background:rgba(239,68,68,0.03);}
+.plant-name{font-size:13px;font-weight:600;margin-bottom:8px;}
+.plant-pct{font-size:22px;font-weight:600;font-family:var(--mono);}
+.plant-pct.p-green{color:var(--green);}
+.plant-pct.p-amber{color:var(--amber);}
+.plant-pct.p-red{color:var(--red);}
+.plant-sub{font-size:11px;color:var(--text2);margin-top:3px;}
+.plant-bar{margin-top:8px;height:5px;background:var(--surf2);border-radius:3px;overflow:hidden;}
+.plant-bar-fill{height:100%;border-radius:3px;transition:width 0.5s;}
+
+/* DETALLE TABLE */
+.table-wrap{background:var(--surf);border:1px solid var(--bord);border-radius:var(--r);overflow:hidden;margin-bottom:20px;}
+.table-title{padding:12px 16px;border-bottom:1px solid var(--bord);font-size:12px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.06em;display:flex;align-items:center;justify-content:space-between;}
+table{width:100%;border-collapse:collapse;font-size:12px;}
+th{padding:8px 12px;text-align:left;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text3);border-bottom:1px solid var(--bord2);}
+td{padding:8px 12px;border-bottom:1px solid var(--bord);font-family:var(--mono);}
+tr:last-child td{border-bottom:none;}
+tr:hover td{background:var(--surf2);}
+.badge{display:inline-block;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:600;font-family:var(--sans);}
+.b-ok{background:rgba(16,185,129,0.12);color:var(--green);}
+.b-pend{background:rgba(239,68,68,0.1);color:var(--red);}
+.b-na{background:rgba(100,120,150,0.15);color:var(--text3);}
+
+/* RESUMEN 2 COL */
+.resumen-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px;}
+
+/* DONUT */
+.donut-wrap{display:flex;align-items:center;justify-content:center;gap:16px;padding:12px 0;}
+.donut-leg{display:flex;flex-direction:column;gap:8px;}
+.donut-item{display:flex;align-items:center;gap:8px;font-size:12px;}
+.d-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
+.d-val{font-weight:600;font-family:var(--mono);}
+
+/* LOADING */
+.loading{text-align:center;padding:40px;color:var(--text2);font-size:13px;}
+.spinner{width:24px;height:24px;border:2.5px solid var(--surf2);border-top-color:var(--purple);border-radius:50%;animation:spin 0.7s linear infinite;margin:0 auto 12px;}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+@media(max-width:600px){
+  .kpi-row{grid-template-columns:1fr 1fr;}
+  .plant-grid{grid-template-columns:1fr 1fr;}
+  .resumen-row{grid-template-columns:1fr;}
+  .main{padding:14px;}
+}
+</style>
+</head>
+<body>
+<div class="sync-bar" id="sync-bar"></div>
+<div class="toast" id="toast"></div>
+
+<!-- ══ LOCK SCREEN ══ -->
+<div class="lock-screen" id="lock-screen">
+  <div class="lock-card" id="lock-card">
+    <div class="lock-icon">
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="2" stroke-linecap="round">
+        <rect x="3" y="11" width="18" height="11" rx="2"/>
+        <path d="M7 11V7a5 5 0 0110 0v4"/>
+        <circle cx="12" cy="16" r="1.5" fill="#a78bfa" stroke="none"/>
+      </svg>
+    </div>
+    <div class="lock-title">Control — MaquiLog</div>
+    <div class="lock-sub">Ingresa la clave de acceso para continuar</div>
+    <div class="pin-dots" id="pin-dots">
+      <div class="pin-dot" id="pd0"></div>
+      <div class="pin-dot" id="pd1"></div>
+      <div class="pin-dot" id="pd2"></div>
+      <div class="pin-dot" id="pd3"></div>
+      <div class="pin-dot" id="pd4"></div>
+      <div class="pin-dot" id="pd5"></div>
+      <div class="pin-dot" id="pd6"></div>
+      <div class="pin-dot" id="pd7"></div>
+    </div>
+    <div class="pin-pad">
+      <button class="pin-btn" onclick="pinPress('1')">1</button>
+      <button class="pin-btn" onclick="pinPress('2')">2</button>
+      <button class="pin-btn" onclick="pinPress('3')">3</button>
+      <button class="pin-btn" onclick="pinPress('4')">4</button>
+      <button class="pin-btn" onclick="pinPress('5')">5</button>
+      <button class="pin-btn" onclick="pinPress('6')">6</button>
+      <button class="pin-btn" onclick="pinPress('7')">7</button>
+      <button class="pin-btn" onclick="pinPress('8')">8</button>
+      <button class="pin-btn" onclick="pinPress('9')">9</button>
+      <button class="pin-btn zero" onclick="pinPress('0')">0</button>
+      <button class="pin-btn del" onclick="pinDel()">⌫</button>
+    </div>
+    <div class="pin-error" id="pin-error">Clave incorrecta. Intenta de nuevo.</div>
+    <button class="btn-back-lock" onclick="window.location.href='index.html'">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+      Volver al menú
+    </button>
+  </div>
+</div>
+
+<!-- ══ APP ══ -->
+<div class="app" id="app">
+
+<div class="header">
+  <div class="header-inner">
+    <div class="logo">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="2.2" stroke-linecap="round">
+        <path d="M3 3h7v7H3zM14 3h7v7h-7zM14 14h7v7h-7zM3 14h7v7H3z"/>
+      </svg>
+    </div>
+    <div>
+      <div class="header-title">Control — Dashboard</div>
+      <div class="header-sub" id="hdr-sub">MaquiLog · TASA Supply Chain</div>
+    </div>
+    <a href="index.html" style="margin-left:auto;font-size:11px;color:var(--text3);text-decoration:none;">← Menú</a>
+  </div>
+</div>
+
+<div class="period-bar">
+  <div class="period-inner">
+    <span class="period-label">Período:</span>
+    <select class="period-select" id="sel-mes" onchange="cargarDatos()">
+      <option value="1">Enero 2026</option>
+      <option value="2">Febrero 2026</option>
+      <option value="3">Marzo 2026</option>
+      <option value="4" selected>Abril 2026</option>
+      <option value="5">Mayo 2026</option>
+      <option value="6">Junio 2026</option>
+      <option value="7">Julio 2026</option>
+      <option value="8">Agosto 2026</option>
+      <option value="9">Septiembre 2026</option>
+      <option value="10">Octubre 2026</option>
+      <option value="11">Noviembre 2026</option>
+      <option value="12">Diciembre 2026</option>
+    </select>
+    <select class="period-select" id="sel-cd" onchange="renderDashboard()">
+      <option value="">Todas las plantas</option>
+      <option>Callao</option><option>Chimbote</option><option>Malabrigo</option>
+      <option>Matarani</option><option>Pisco</option><option>Pucusana</option><option>Vegueta</option>
+    </select>
+    <button class="btn-refresh" onclick="cargarDatos()">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
+      Actualizar
+    </button>
+    <button class="logout-btn" onclick="logout()">🔒 Cerrar sesión</button>
+  </div>
+</div>
+
+<div class="main">
+  <div class="loading" id="loading-state">
+    <div class="spinner"></div>
+    Cargando datos desde Supabase...
+  </div>
+
+  <div id="dashboard-content" style="display:none;">
+
+    <!-- KPIs -->
+    <div class="kpi-row" id="kpi-row"></div>
+
+    <!-- CONTROL HORÓMETROS POR PLANTA -->
+    <div class="sec-title" id="sec-plantas">Control de horómetros por planta</div>
+    <div class="plant-grid" id="plant-grid"></div>
+
+    <!-- RESUMEN 2 COL -->
+    <div class="resumen-row">
+      <div class="table-wrap">
+        <div class="table-title">
+          <span>Equipos al día ✓</span>
+          <span id="cnt-ok" style="color:var(--green);font-family:var(--mono);font-size:13px;">0</span>
+        </div>
+        <table>
+          <thead><tr><th>Equipo</th><th>Planta</th><th>Horómetro</th><th>Última actualización</th></tr></thead>
+          <tbody id="tbody-ok"></tbody>
+        </table>
+      </div>
+      <div class="table-wrap">
+        <div class="table-title">
+          <span>Equipos pendientes ✗</span>
+          <span id="cnt-pend" style="color:var(--red);font-family:var(--mono);font-size:13px;">0</span>
+        </div>
+        <table>
+          <thead><tr><th>Equipo</th><th>Planta</th><th>Horómetro</th><th>Última actualización</th></tr></thead>
+          <tbody id="tbody-pend"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- TABLA GENERAL -->
+    <div class="table-wrap">
+      <div class="table-title">
+        <span>Detalle completo — todos los equipos</span>
+        <span id="cnt-total" style="color:var(--text2);font-family:var(--mono);font-size:12px;"></span>
+      </div>
+      <div style="overflow-x:auto">
+        <table>
+          <thead><tr><th>Código / ID</th><th>Tipo</th><th>Planta / CD</th><th>Marca</th><th>Horómetro actual</th><th>Última actualización</th><th>Estado horómetro</th></tr></thead>
+          <tbody id="tbody-all"></tbody>
+        </table>
+      </div>
+    </div>
+
+  </div><!-- end dashboard-content -->
+</div><!-- end main -->
+</div><!-- end app -->
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script>
+const SUPA_URL = 'https://njmswjinwrcxsfduchsc.supabase.co';
+const SUPA_KEY = 'sb_publishable_KKD-gJzg0Urws7ff-h5XFg_91sL146J';
+const sb = supabase.createClient(SUPA_URL, SUPA_KEY);
+const PIN_CORRECTO = '26121994';
+
+let pinActual = '';
+let EQUIPOS = [];
+let MANTS = [];
+
+// ══ PIN ══════════════════════════════════════════════════
+function pinPress(d) {
+  if (pinActual.length >= 8) return;
+  pinActual += d;
+  actualizarDots();
+  if (pinActual.length === 8) verificarPin();
+}
+
+function pinDel() {
+  pinActual = pinActual.slice(0, -1);
+  actualizarDots();
+  document.getElementById('pin-error').classList.remove('show');
+}
+
+function actualizarDots() {
+  for (let i = 0; i < 8; i++) {
+    document.getElementById('pd' + i).classList.toggle('filled', i < pinActual.length);
+  }
+}
+
+function verificarPin() {
+  if (pinActual === PIN_CORRECTO) {
+    document.getElementById('lock-screen').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+    cargarDatos();
+  } else {
+    const card = document.getElementById('lock-card');
+    card.classList.add('shake');
+    setTimeout(() => card.classList.remove('shake'), 400);
+    document.getElementById('pin-error').classList.add('show');
+    pinActual = '';
+    actualizarDots();
+  }
+}
+
+function logout() {
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('lock-screen').style.display = 'flex';
+  pinActual = '';
+  actualizarDots();
+  document.getElementById('pin-error').classList.remove('show');
+}
+
+// Keyboard support
+document.addEventListener('keydown', e => {
+  if (document.getElementById('lock-screen').style.display === 'none') return;
+  if (e.key >= '0' && e.key <= '9') pinPress(e.key);
+  if (e.key === 'Backspace') pinDel();
+  if (e.key === 'Enter' && pinActual.length === 8) verificarPin();
+});
+
+// ══ DATOS ═════════════════════════════════════════════════
+function sync(on) { document.getElementById('sync-bar').classList.toggle('on', on); }
+
+async function cargarDatos() {
+  document.getElementById('loading-state').style.display = 'block';
+  document.getElementById('dashboard-content').style.display = 'none';
+  sync(true);
+
+  try {
+    const mes = parseInt(document.getElementById('sel-mes').value);
+    const anio = 2026;
+
+    // Cargar equipos
+    const { data: eq, error: e1 } = await sb.from('equipos').select('id,codigo,placa,tipo,marca,cd,status,horometro_ultimo_mant,fecha_ultimo_mant').order('cd').order('id');
+    if (e1) throw e1;
+    EQUIPOS = eq;
+
+    // Cargar mantenimientos del mes
+    const fechaIni = `${anio}-${String(mes).padStart(2,'0')}-01`;
+    const fechaFin = `${anio}-${String(mes).padStart(2,'0')}-31`;
+    const { data: mants, error: e2 } = await sb.from('mantenimientos')
+      .select('equipo_id,horometro,fecha_mantenimiento')
+      .gte('fecha_mantenimiento', fechaIni)
+      .lte('fecha_mantenimiento', fechaFin);
+    MANTS = mants || [];
+
+    const meses = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+    document.getElementById('hdr-sub').textContent = `MaquiLog · Control horómetros · ${meses[mes-1]} ${anio}`;
+
+    renderDashboard();
+  } catch(err) {
+    showToast('Error cargando datos: ' + err.message, true);
+  } finally {
+    sync(false);
+    document.getElementById('loading-state').style.display = 'none';
+    document.getElementById('dashboard-content').style.display = 'block';
+  }
+}
+
+// ══ RENDER ═══════════════════════════════════════════════
+function renderDashboard() {
+  const mes = parseInt(document.getElementById('sel-mes').value);
+  const cdFiltro = document.getElementById('sel-cd').value;
+  const anio = 2026;
+
+  // Determinar qué equipos actualizaron horómetro en el mes
+  // Un equipo "actualizó" si: tiene registro en mantenimientos del mes
+  // O si fecha_ultimo_mant cae en el mes seleccionado
+  const equiposFiltro = cdFiltro ? EQUIPOS.filter(e => e.cd === cdFiltro) : EQUIPOS;
+  const equiposMont = equiposFiltro.filter(e => e.tipo === 'Montacargas' || e.tipo === 'Apilador' || e.tipo === 'Traspaleta' || !e.tipo || true);
+
+  function actualizoEnMes(eq) {
+    // Tiene mantenimiento en el mes
+    const tieneMant = MANTS.some(m => m.equipo_id === eq.id);
+    if (tieneMant) return true;
+    // O su fecha_ultimo_mant cae en el mes
+    if (eq.fecha_ultimo_mant) {
+      const f = new Date(eq.fecha_ultimo_mant + 'T12:00:00');
+      if (f.getMonth() + 1 === mes && f.getFullYear() === anio) return true;
+    }
+    return false;
+  }
+
+  const okList   = equiposMont.filter(e => actualizoEnMes(e));
+  const pendList = equiposMont.filter(e => !actualizoEnMes(e));
+  const total    = equiposMont.length;
+  const pctGlobal = total > 0 ? Math.round(okList.length / total * 100) : 0;
+
+  // ── KPIs ──────────────────────────────────────────────
+  const kpiEl = document.getElementById('kpi-row');
+  kpiEl.innerHTML = `
+    <div class="kpi-card kpi-purple"><div class="kpi-num">${total}</div><div class="kpi-lbl">Total equipos</div></div>
+    <div class="kpi-card kpi-green"><div class="kpi-num">${okList.length}</div><div class="kpi-lbl">Actualizaron horómetro</div><div class="kpi-sub">En el período seleccionado</div></div>
+    <div class="kpi-card kpi-red"><div class="kpi-num">${pendList.length}</div><div class="kpi-lbl">Sin actualización</div><div class="kpi-sub">Pendientes en el mes</div></div>
+    <div class="kpi-card ${pctGlobal>=80?'kpi-green':pctGlobal>=50?'kpi-amber':'kpi-red'}"><div class="kpi-num">${pctGlobal}%</div><div class="kpi-lbl">Cumplimiento global</div></div>`;
+
+  // ── POR PLANTA ─────────────────────────────────────────
+  const CDS = [...new Set(EQUIPOS.map(e => e.cd).filter(Boolean))].sort();
+  const plantGrid = document.getElementById('plant-grid');
+  plantGrid.innerHTML = '';
+
+  const secTitle = document.getElementById('sec-plantas');
+  const meses = ['','Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  secTitle.childNodes[0] && (secTitle.childNodes[0].textContent = `Control de horómetros por planta — ${meses[mes]}`);
+
+  CDS.forEach(cd => {
+    if (cdFiltro && cd !== cdFiltro) return;
+    const eqCD = equiposMont.filter(e => e.cd === cd);
+    if (!eqCD.length) return;
+    const okCD = eqCD.filter(e => actualizoEnMes(e)).length;
+    const pct  = Math.round(okCD / eqCD.length * 100);
+    const cls  = pct === 100 ? 'completo' : pct >= 50 ? 'parcial' : 'pendiente';
+    const clsP = pct === 100 ? 'p-green' : pct >= 50 ? 'p-amber' : 'p-red';
+    const fillColor = pct === 100 ? 'var(--green)' : pct >= 50 ? 'var(--amber)' : 'var(--red)';
+
+    const card = document.createElement('div');
+    card.className = `plant-card ${cls}`;
+    card.innerHTML = `
+      <div class="plant-name">${cd}</div>
+      <div class="plant-pct ${clsP}">${pct}%</div>
+      <div class="plant-sub">${okCD} de ${eqCD.length} equipos</div>
+      <div class="plant-bar"><div class="plant-bar-fill" style="width:${pct}%;background:${fillColor}"></div></div>`;
+    plantGrid.appendChild(card);
+  });
+
+  // ── TABLAS OK / PENDIENTE ──────────────────────────────
+  const fD = d => { if(!d) return '—'; try{const p=d.split('-');return`${p[2]}/${p[1]}/${p[0]}`;}catch{return d;} };
+
+  const tbOk = document.getElementById('tbody-ok');
+  tbOk.innerHTML = okList.map(e => `
+    <tr>
+      <td>${e.codigo||e.placa||e.id}</td>
+      <td>${e.cd||'—'}</td>
+      <td>${e.horometro_ultimo_mant ? parseFloat(e.horometro_ultimo_mant)+' hrs' : '—'}</td>
+      <td>${fD(e.fecha_ultimo_mant)}</td>
+    </tr>`).join('');
+  document.getElementById('cnt-ok').textContent = okList.length;
+
+  const tbPend = document.getElementById('tbody-pend');
+  tbPend.innerHTML = pendList.map(e => `
+    <tr>
+      <td>${e.codigo||e.placa||e.id}</td>
+      <td style="color:var(--red)">${e.cd||'—'}</td>
+      <td>${e.horometro_ultimo_mant ? parseFloat(e.horometro_ultimo_mant)+' hrs' : '—'}</td>
+      <td style="color:var(--text3)">${fD(e.fecha_ultimo_mant)||'Sin registro'}</td>
+    </tr>`).join('');
+  document.getElementById('cnt-pend').textContent = pendList.length;
+
+  // ── TABLA GENERAL ──────────────────────────────────────
+  document.getElementById('cnt-total').textContent = `${total} equipos`;
+  document.getElementById('tbody-all').innerHTML = equiposMont.map(e => {
+    const ok = actualizoEnMes(e);
+    return `<tr>
+      <td>${e.codigo||e.placa||e.id}</td>
+      <td style="color:var(--text2)">${e.tipo||'—'}</td>
+      <td>${e.cd||'—'}</td>
+      <td>${e.marca||'—'}</td>
+      <td>${e.horometro_ultimo_mant ? parseFloat(e.horometro_ultimo_mant)+' hrs' : '—'}</td>
+      <td>${fD(e.fecha_ultimo_mant)}</td>
+      <td><span class="badge ${ok?'b-ok':'b-pend'}">${ok?'✓ Al día':'✗ Pendiente'}</span></td>
+    </tr>`;
+  }).join('');
+}
+
+function showToast(msg, err=false) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show ' + (err ? 'err' : 'ok');
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+</script>
+</body>
+</html>
