@@ -170,6 +170,8 @@ input.fld:focus{border-color:var(--accent);}
       <div style="display:flex;gap:6px;margin-bottom:16px;background:var(--surf2);border-radius:var(--r-sm);padding:4px;">
         <button type="button" id="tab-estado" onclick="setTab('estado')" style="flex:1;padding:8px;border:none;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;font-family:var(--sans);background:var(--accent);color:white;transition:all 0.15s;">Estado operativo</button>
         <button type="button" id="tab-mant" onclick="setTab('mant')" style="flex:1;padding:8px;border:none;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;font-family:var(--sans);background:transparent;color:var(--text2);transition:all 0.15s;">Registrar mantenimiento</button>
+        <button type="button" id="tab-horo" onclick="setTab('horo')" style="flex:1;padding:8px;border:none;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;font-family:var(--sans);background:transparent;color:var(--text2);transition:all 0.15s;">Registrar horómetro</button>
+        <button type="button" id="tab-horo" onclick="setTab('horo')" style="flex:1;padding:8px;border:none;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;font-family:var(--sans);background:transparent;color:var(--text2);transition:all 0.15s;">Registrar horómetro</button>
       </div>
 
       <!-- PANEL: solo estado -->
@@ -189,15 +191,25 @@ input.fld:focus{border-color:var(--accent);}
           <div><label class="fld">Fecha de mantenimiento *</label><input type="date" id="m-fecha" class="fld"></div>
           <div><label class="fld">Horómetro *</label><input type="number" id="m-horo" class="fld" placeholder="ej. 1250" inputmode="decimal" step="0.1"></div>
         </div>
-        <div style="margin-bottom:10px;">
-          <label class="fld">Estado del equipo</label>
-          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:6px;">
-            <button type="button" onclick="setEstado('Operativo')" id="mb-op" style="padding:10px 6px;border-radius:var(--r-sm);border:1.5px solid rgba(16,185,129,0.3);background:rgba(16,185,129,0.08);color:var(--green);font-size:12px;font-weight:600;cursor:pointer;font-family:var(--sans);transition:all 0.15s;">✓ Operativo</button>
-            <button type="button" onclick="setEstado('Inoperativo')" id="mb-inop" style="padding:10px 6px;border-radius:var(--r-sm);border:1.5px solid rgba(239,68,68,0.3);background:rgba(239,68,68,0.06);color:var(--red);font-size:12px;font-weight:600;cursor:pointer;font-family:var(--sans);transition:all 0.15s;">✕ Inoperativo</button>
-            <button type="button" onclick="setEstado('En proceso de baja')" id="mb-baja" style="padding:10px 6px;border-radius:var(--r-sm);border:1.5px solid rgba(245,158,11,0.3);background:rgba(245,158,11,0.06);color:var(--amber);font-size:12px;font-weight:600;cursor:pointer;font-family:var(--sans);transition:all 0.15s;">↓ En baja</button>
-          </div>
+        
+      </div>
+
+      <!-- PANEL: solo horómetro -->
+      <div id="panel-horo" style="display:none;">
+        <p style="font-size:12px;color:var(--text2);margin-bottom:14px;line-height:1.5;">Registra una lectura del horómetro sin generar un mantenimiento. Útil para seguimiento de horas de uso entre servicios.</p>
+        <div class="fld-row">
+          <div><label class="fld">Fecha de lectura *</label><input type="date" id="h-fecha" class="fld"></div>
+          <div><label class="fld">Horómetro (hrs) *</label><input type="number" id="h-horo" class="fld" placeholder="ej. 1250" inputmode="decimal" step="0.1"></div>
+        </div>
+        <div class="fld-grp" style="margin-bottom:10px;">
+          <label class="fld">Observación (opcional)</label>
+          <textarea id="h-obs" class="fld" rows="2" placeholder="Ej: lectura antes de cambio de turno..." style="resize:none;"></textarea>
+        </div>
+        <div style="background:rgba(37,99,235,0.08);border:1px solid rgba(37,99,235,0.2);border-radius:var(--r-sm);padding:10px 12px;font-size:11px;color:var(--text2);line-height:1.5;">
+          ⚡ Solo actualiza el horómetro en la ficha del equipo. No genera registro de mantenimiento.
         </div>
       </div>
+
       <div class="sect-lbl" id="hist-lbl" style="display:none;">Últimos registros</div>
       <div id="m-hist"></div>
     </div>
@@ -323,15 +335,21 @@ let modoTab='estado';
 
 function setTab(tab){
   modoTab=tab;
-  const isEstado=tab==='estado';
-  document.getElementById('panel-estado').style.display=isEstado?'block':'none';
-  document.getElementById('panel-mant').style.display=isEstado?'none':'block';
-  const tE=document.getElementById('tab-estado'),tM=document.getElementById('tab-mant');
-  tE.style.background=isEstado?'var(--accent)':'transparent';
-  tE.style.color=isEstado?'white':'var(--text2)';
-  tM.style.background=isEstado?'transparent':'var(--accent)';
-  tM.style.color=isEstado?'var(--text2)':'white';
-  document.getElementById('save-lbl').textContent=isEstado?'✓ Guardar estado':'✓ Guardar mantenimiento';
+  ['panel-estado','panel-mant','panel-horo'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el) el.style.display='none';
+  });
+  document.getElementById('panel-'+tab).style.display='block';
+  ['tab-estado','tab-mant','tab-horo'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(!el) return;
+    el.style.background='transparent';
+    el.style.color='var(--text2)';
+  });
+  const activeTab=document.getElementById('tab-'+tab);
+  if(activeTab){activeTab.style.background='var(--accent)';activeTab.style.color='white';}
+  const lbl=document.getElementById('save-lbl');
+  if(lbl) lbl.textContent=tab==='estado'?'✓ Guardar estado':tab==='mant'?'✓ Guardar mantenimiento':'✓ Guardar horómetro';
 }
 
 function setEstado(v){
@@ -352,63 +370,94 @@ async function guardar(){
   const sup=document.getElementById('sup-name').value.trim()||'Sin nombre';
   const btn=document.getElementById('btn-save');
   const e=EQ.find(x=>x.id===activeId);
-  const estadoFinal=nuevoEstado||e.status;
+  const savedId=activeId;
 
-  // MODO SOLO ESTADO
+  function setBtnLoading(on){
+    if(!btn) return;
+    if(on){btn.disabled=true;btn.innerHTML='<div class="spinner-sm"></div> Guardando...';}
+    else{btn.disabled=false;btn.innerHTML='<span id="save-lbl">'+
+      (modoTab==='estado'?'✓ Guardar estado':modoTab==='mant'?'✓ Guardar mantenimiento':'✓ Guardar horómetro')+'</span>';}
+  }
+
+  // ── MODO ESTADO ──────────────────────────────────────────
   if(modoTab==='estado'){
     if(!nuevoEstado){showToast('Selecciona un estado',true);return;}
-    btn.disabled=true;btn.innerHTML='<div class="spinner-sm"></div> Guardando...';sync(true);
-    await sb.from('equipos').update({status:nuevoEstado}).eq('id',activeId);
-    const idx=EQ.findIndex(x=>x.id===activeId);
-    if(idx>=0) EQ[idx].status=nuevoEstado;
-    sync(false);
-    closeModal();renderStats();applyFilters();
-    showToast('✓ Estado actualizado — '+activeId);
+    setBtnLoading(true);
+    try{
+      const{error}=await sb.from('equipos').update({status:nuevoEstado}).eq('id',savedId);
+      if(error) throw error;
+      const idx=EQ.findIndex(x=>x.id===savedId);
+      if(idx>=0) EQ[idx].status=nuevoEstado;
+      closeModal();renderStats();applyFilters();
+      showToast('✓ Estado actualizado — '+savedId);
+    }catch(err){showToast('Error: '+err.message,true);}
+    finally{setBtnLoading(false);}
     return;
   }
 
-  // MODO MANTENIMIENTO — requiere fecha y horómetro
-  const fecha=document.getElementById('m-fecha').value,horo=document.getElementById('m-horo').value;
-  if(!fecha){document.getElementById('m-fecha').style.borderColor='var(--red)';return;}
-  if(!horo){document.getElementById('m-horo').style.borderColor='var(--red)';return;}
-  btn.disabled=true;btn.innerHTML='<div class="spinner-sm"></div> Guardando...';sync(true);
-
-  // 1. Insertar en mantenimientos (trazabilidad)
-  const{error}=await sb.from('mantenimientos').insert({
-    equipo_id:activeId,placa:e.codigo||e.placa||e.id,
-    cd:e.cd,tipo:e.tipo,marca:e.marca,modelo:e.modelo,
-    fecha_mantenimiento:fecha,horometro:parseFloat(horo),
-    supervisor:sup,estado:estadoFinal
-  });
-  if(error){btn.disabled=false;btn.innerHTML='<span id="save-lbl">✓ Guardar mantenimiento</span>';showToast('Error: '+error.message,true);sync(false);return;}
-
-  // 2. Actualizar tabla equipos: fecha, horómetro y estado
-  const{error:errEq}=await sb.from('equipos').update({
-    horometro_ultimo_mant: String(parseFloat(horo)),
-    fecha_ultimo_mant: fecha,
-    status: estadoFinal
-  }).eq('id',activeId);
-
-  if(errEq){
-    console.error('Error actualizando equipos:',errEq);
-    showToast('Mant. guardado pero error al actualizar equipo: '+errEq.message,true);
+  // ── MODO MANTENIMIENTO ───────────────────────────────────
+  if(modoTab==='mant'){
+    const fecha=document.getElementById('m-fecha').value;
+    const horo=document.getElementById('m-horo').value;
+    if(!fecha){document.getElementById('m-fecha').style.borderColor='var(--red)';return;}
+    if(!horo){document.getElementById('m-horo').style.borderColor='var(--red)';return;}
+    setBtnLoading(true);
+    try{
+      // 1. Insertar en mantenimientos
+      const{error:e1}=await sb.from('mantenimientos').insert({
+        equipo_id:savedId,placa:e.codigo||e.placa||e.id,
+        cd:e.cd,tipo:e.tipo,marca:e.marca,modelo:e.modelo,
+        fecha_mantenimiento:fecha,horometro:parseFloat(horo),
+        supervisor:sup,estado:e.status
+      });
+      if(e1) throw e1;
+      // 2. Actualizar fecha y horómetro (SIN tocar status)
+      const{error:e2}=await sb.from('equipos').update({
+        horometro_ultimo_mant: String(parseFloat(horo)),
+        fecha_ultimo_mant: fecha
+      }).eq('id',savedId);
+      if(e2) console.warn('Error actualizando equipo:',e2.message);
+      // Actualizar local
+      const idx=EQ.findIndex(x=>x.id===savedId);
+      if(idx>=0){
+        EQ[idx].fecha_ultimo_mant=fecha;
+        EQ[idx].horometro_ultimo_mant=String(parseFloat(horo));
+      }
+      live[savedId]={fecha, horo:parseFloat(horo), _set:true};
+      allMants.unshift({equipo_id:savedId,placa:e.codigo||e.placa||e.id,cd:e.cd,tipo:e.tipo,marca:e.marca,modelo:e.modelo,fecha_mantenimiento:fecha,horometro:parseFloat(horo),supervisor:sup,estado:e.status,created_at:new Date().toISOString()});
+      closeModal();renderStats();applyFilters();renderHistPanel();
+      showToast('✓ Mantenimiento registrado — '+savedId);
+    }catch(err){showToast('Error: '+err.message,true);}
+    finally{setBtnLoading(false);}
+    return;
   }
 
-  // Actualizar estado local
-  const idx=EQ.findIndex(x=>x.id===activeId);
-  if(idx>=0){
-    EQ[idx].status=estadoFinal;
-    EQ[idx].fecha_ultimo_mant=fecha;
-    EQ[idx].horometro_ultimo_mant=String(parseFloat(horo));
+  // ── MODO HORÓMETRO ───────────────────────────────────────
+  if(modoTab==='horo'){
+    const fecha=document.getElementById('h-fecha').value;
+    const horo=document.getElementById('h-horo').value;
+    const obs=document.getElementById('h-obs').value.trim();
+    if(!fecha){document.getElementById('h-fecha').style.borderColor='var(--red)';return;}
+    if(!horo){document.getElementById('h-horo').style.borderColor='var(--red)';return;}
+    setBtnLoading(true);
+    try{
+      // Solo actualiza horometro en tabla equipos, sin tocar fecha_ultimo_mant ni status
+      const{error}=await sb.from('equipos').update({
+        horometro_ultimo_mant: String(parseFloat(horo))
+      }).eq('id',savedId);
+      if(error) throw error;
+      // Actualizar local
+      const idx=EQ.findIndex(x=>x.id===savedId);
+      if(idx>=0) EQ[idx].horometro_ultimo_mant=String(parseFloat(horo));
+      if(live[savedId]) live[savedId].horo=parseFloat(horo);
+      closeModal();renderStats();applyFilters();
+      showToast('✓ Horómetro actualizado — '+savedId+' → '+parseFloat(horo)+' hrs');
+    }catch(err){showToast('Error: '+err.message,true);}
+    finally{setBtnLoading(false);}
+    return;
   }
-  // Actualizar live state
-  live[activeId]={fecha, horo:parseFloat(horo), _set:true};
-  sync(false);
-  if(error){btn.disabled=false;btn.innerHTML='<span id="save-lbl">✓ Guardar en Supabase</span>';showToast('Error: '+error.message,true);return;}
-  allMants.unshift({equipo_id:activeId,placa:e.codigo||e.placa||e.id,cd:e.cd,tipo:e.tipo,marca:e.marca,modelo:e.modelo,fecha_mantenimiento:fecha,horometro:parseFloat(horo),supervisor:sup,estado:estadoFinal,created_at:new Date().toISOString()});
-  closeModal();renderStats();applyFilters();renderHistPanel();
-  showToast(`✓ Guardado en Supabase — ${activeId}`);
 }
+
 function toggleHist(){document.getElementById('hist-panel').classList.toggle('open');renderHistPanel();}
 function renderHistPanel(){
   const tb=document.getElementById('hist-body'),empty=document.getElementById('hist-empty');
