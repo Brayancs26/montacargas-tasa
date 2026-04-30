@@ -446,25 +446,49 @@ async function guardar(){
     if(!fecha){document.getElementById('h-fecha').style.borderColor='var(--red)';showToast('Ingresa la fecha de lectura',true);return;}
     if(!horo){document.getElementById('h-horo').style.borderColor='var(--red)';showToast('Ingresa el horómetro',true);return;}
     // Validación: no puede ser menor al horómetro actual
-    const eq=EQ.find(x=>x.id===savedId);
-    const horoActual=parseFloat(eq?.horometro_ultimo_mant)||0;
+    const eqH=EQ.find(x=>x.id===savedId);
+    const horoActual=parseFloat(eqH?.horometro_ultimo_mant)||0;
     const horoNuevo=parseFloat(horo);
     if(horoActual>0 && horoNuevo < horoActual){
       document.getElementById('h-horo').style.borderColor='var(--red)';
-      showToast(`⚠ El horómetro no puede ser menor al actual (${horoActual} hrs)`,true);
+      showToast(`⚠ Horómetro menor al actual (${horoActual} hrs). Verifica el valor.`,true);
       return;
     }
     setBtnLoading(true);
     try{
-      const{error}=await sb.from('equipos').update({
+      const fechaObj=new Date(fecha+'T12:00:00');
+      const mesNum=fechaObj.getMonth()+1;
+      const anioNum=fechaObj.getFullYear();
+
+      // 1. Insertar en historial horometros_registros
+      const{error:e1}=await sb.from('horometros_registros').insert({
+        equipo_id: savedId,
+        codigo:    eqH?.codigo||eqH?.placa||savedId,
+        cd:        eqH?.cd||'',
+        tipo:      eqH?.tipo||'',
+        marca:     eqH?.marca||'',
+        horometro: horoNuevo,
+        fecha_lectura: fecha,
+        mes:       mesNum,
+        anio:      anioNum,
+        observacion: obs||null,
+        supervisor:  sup
+      });
+      if(e1) throw e1;
+
+      // 2. Actualizar horometro en equipos (sin tocar fecha_ultimo_mant ni status)
+      const{error:e2}=await sb.from('equipos').update({
         horometro_ultimo_mant: String(horoNuevo)
       }).eq('id',savedId);
-      if(error) throw error;
+      if(e2) console.warn('Error actualizando equipo:',e2.message);
+
+      // Actualizar estado local
       const idx=EQ.findIndex(x=>x.id===savedId);
       if(idx>=0) EQ[idx].horometro_ultimo_mant=String(horoNuevo);
       if(live[savedId]) live[savedId].horo=horoNuevo;
+
       closeModal();renderStats();applyFilters();
-      showToast('✓ Horómetro actualizado — '+savedId+' → '+horoNuevo+' hrs');
+      showToast('✓ Horómetro registrado — '+savedId+' → '+horoNuevo+' hrs · '+fecha.split('-').reverse().join('/'));
     }catch(err){showToast('Error: '+err.message,true);}
     finally{setBtnLoading(false);}
     return;
