@@ -195,18 +195,16 @@ input.fld:focus{border-color:var(--accent);}
 
       <!-- PANEL: solo horómetro -->
       <div id="panel-horo" style="display:none;">
-        <p style="font-size:12px;color:var(--text2);margin-bottom:14px;line-height:1.5;">Registra una lectura del horómetro sin generar un mantenimiento. Útil para seguimiento de horas de uso entre servicios.</p>
+        <p style="font-size:12px;color:var(--text2);margin-bottom:14px;line-height:1.5;">Registrar lectura de horómetro mensualmente.</p>
         <div class="fld-row">
           <div><label class="fld">Fecha de lectura *</label><input type="date" id="h-fecha" class="fld"></div>
           <div><label class="fld">Horómetro (hrs) *</label><input type="number" id="h-horo" class="fld" placeholder="ej. 1250" inputmode="decimal" step="0.1"></div>
         </div>
         <div class="fld-grp" style="margin-bottom:10px;">
           <label class="fld">Observación (opcional)</label>
-          <textarea id="h-obs" class="fld" rows="2" placeholder="Ej: lectura antes de cambio de turno..." style="resize:none;"></textarea>
+          <textarea id="h-obs" class="fld" rows="2" placeholder="Último horómetro registrado: cargando..." style="resize:none;"></textarea>
         </div>
-        <div style="background:rgba(37,99,235,0.08);border:1px solid rgba(37,99,235,0.2);border-radius:var(--r-sm);padding:10px 12px;font-size:11px;color:var(--text2);line-height:1.5;">
-          ⚡ Solo actualiza el horómetro en la ficha del equipo. No genera registro de mantenimiento.
-        </div>
+
       </div>
 
       <div class="sect-lbl" id="hist-lbl" style="display:none;">Últimos registros</div>
