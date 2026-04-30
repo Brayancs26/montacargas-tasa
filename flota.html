@@ -171,7 +171,6 @@ input.fld:focus{border-color:var(--accent);}
         <button type="button" id="tab-estado" onclick="setTab('estado')" style="flex:1;padding:8px;border:none;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;font-family:var(--sans);background:var(--accent);color:white;transition:all 0.15s;">Estado operativo</button>
         <button type="button" id="tab-mant" onclick="setTab('mant')" style="flex:1;padding:8px;border:none;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;font-family:var(--sans);background:transparent;color:var(--text2);transition:all 0.15s;">Registrar mantenimiento</button>
         <button type="button" id="tab-horo" onclick="setTab('horo')" style="flex:1;padding:8px;border:none;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;font-family:var(--sans);background:transparent;color:var(--text2);transition:all 0.15s;">Registrar horómetro</button>
-        <button type="button" id="tab-horo" onclick="setTab('horo')" style="flex:1;padding:8px;border:none;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;font-family:var(--sans);background:transparent;color:var(--text2);transition:all 0.15s;">Registrar horómetro</button>
       </div>
 
       <!-- PANEL: solo estado -->
@@ -399,8 +398,17 @@ async function guardar(){
   if(modoTab==='mant'){
     const fecha=document.getElementById('m-fecha').value;
     const horo=document.getElementById('m-horo').value;
-    if(!fecha){document.getElementById('m-fecha').style.borderColor='var(--red)';return;}
-    if(!horo){document.getElementById('m-horo').style.borderColor='var(--red)';return;}
+    if(!fecha){document.getElementById('m-fecha').style.borderColor='var(--red)';showToast('Ingresa la fecha de mantenimiento',true);return;}
+    if(!horo){document.getElementById('m-horo').style.borderColor='var(--red)';showToast('Ingresa el horómetro',true);return;}
+    // Validación: horómetro no puede ser menor al registrado anteriormente
+    const eqM=EQ.find(x=>x.id===savedId);
+    const horoActualM=parseFloat(eqM?.horometro_ultimo_mant)||0;
+    const horoNuevoM=parseFloat(horo);
+    if(horoActualM>0 && horoNuevoM < horoActualM){
+      document.getElementById('m-horo').style.borderColor='var(--red)';
+      showToast(`⚠ Horómetro menor al actual (${horoActualM} hrs). Verifica el valor.`,true);
+      return;
+    }
     setBtnLoading(true);
     try{
       // 1. Insertar en mantenimientos
@@ -437,21 +445,28 @@ async function guardar(){
     const fecha=document.getElementById('h-fecha').value;
     const horo=document.getElementById('h-horo').value;
     const obs=document.getElementById('h-obs').value.trim();
-    if(!fecha){document.getElementById('h-fecha').style.borderColor='var(--red)';return;}
-    if(!horo){document.getElementById('h-horo').style.borderColor='var(--red)';return;}
+    if(!fecha){document.getElementById('h-fecha').style.borderColor='var(--red)';showToast('Ingresa la fecha de lectura',true);return;}
+    if(!horo){document.getElementById('h-horo').style.borderColor='var(--red)';showToast('Ingresa el horómetro',true);return;}
+    // Validación: no puede ser menor al horómetro actual
+    const eq=EQ.find(x=>x.id===savedId);
+    const horoActual=parseFloat(eq?.horometro_ultimo_mant)||0;
+    const horoNuevo=parseFloat(horo);
+    if(horoActual>0 && horoNuevo < horoActual){
+      document.getElementById('h-horo').style.borderColor='var(--red)';
+      showToast(`⚠ El horómetro no puede ser menor al actual (${horoActual} hrs)`,true);
+      return;
+    }
     setBtnLoading(true);
     try{
-      // Solo actualiza horometro en tabla equipos, sin tocar fecha_ultimo_mant ni status
       const{error}=await sb.from('equipos').update({
-        horometro_ultimo_mant: String(parseFloat(horo))
+        horometro_ultimo_mant: String(horoNuevo)
       }).eq('id',savedId);
       if(error) throw error;
-      // Actualizar local
       const idx=EQ.findIndex(x=>x.id===savedId);
-      if(idx>=0) EQ[idx].horometro_ultimo_mant=String(parseFloat(horo));
-      if(live[savedId]) live[savedId].horo=parseFloat(horo);
+      if(idx>=0) EQ[idx].horometro_ultimo_mant=String(horoNuevo);
+      if(live[savedId]) live[savedId].horo=horoNuevo;
       closeModal();renderStats();applyFilters();
-      showToast('✓ Horómetro actualizado — '+savedId+' → '+parseFloat(horo)+' hrs');
+      showToast('✓ Horómetro actualizado — '+savedId+' → '+horoNuevo+' hrs');
     }catch(err){showToast('Error: '+err.message,true);}
     finally{setBtnLoading(false);}
     return;
