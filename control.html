@@ -124,6 +124,18 @@ tr:hover td{background:var(--surf2);}
 .spinner{width:24px;height:24px;border:2.5px solid var(--surf2);border-top-color:var(--purple);border-radius:50%;animation:spin 0.7s linear infinite;margin:0 auto 12px;}
 @keyframes spin{to{transform:rotate(360deg);}}
 
+.uso-card{background:var(--surf);border:1px solid var(--bord);border-radius:var(--r);padding:14px 16px;}
+.uso-card-hdr{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:10px;}
+.uso-cd{font-size:13px;font-weight:600;}
+.uso-total{font-size:18px;font-weight:600;font-family:var(--mono);color:var(--purple);}
+.uso-sub{font-size:10px;color:var(--text2);margin-top:1px;}
+.uso-bar-row{display:flex;align-items:center;gap:6px;margin-bottom:4px;}
+.uso-bar-lbl{width:72px;font-size:9px;font-weight:500;color:var(--text2);flex-shrink:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.uso-bar-track{flex:1;height:12px;background:var(--surf2);border-radius:2px;overflow:hidden;}
+.uso-bar-fill{height:100%;border-radius:2px;transition:width 0.5s;}
+.uso-bar-val{width:52px;font-size:9px;font-family:var(--mono);color:var(--text2);text-align:right;flex-shrink:0;}
+.no-data{text-align:center;padding:28px;color:var(--text3);font-size:12px;}
+
 @media(max-width:600px){
   .kpi-row{grid-template-columns:1fr 1fr;}
   .plant-grid{grid-template-columns:1fr 1fr;}
@@ -266,16 +278,38 @@ tr:hover td{background:var(--surf2);}
       </div>
     </div>
 
-    <!-- TABLA GENERAL -->
+    <!-- USO MENSUAL -->
+    <div class="sec-title" style="margin-top:4px">Uso mensual de montacargas — horas operadas por planta</div>
+    <div style="background:var(--surf2);border:1px solid var(--bord);border-radius:var(--r);padding:8px 14px;margin-bottom:10px;font-size:11px;color:var(--text2);line-height:1.5;">
+      📊 Calculado como: <strong style="color:var(--text)">Horómetro cierre mes actual − Horómetro cierre mes anterior</strong>. 
+      Refleja las horas reales de operación en el período.
+      <span style="color:var(--amber);margin-left:8px;">⚠ Solo equipos con registro en ambos meses.</span>
+    </div>
+
+    <!-- BARRAS POR PLANTA -->
+    <div id="uso-plant-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px;margin-bottom:14px;"></div>
+
+    <!-- TABLA DETALLE USO -->
     <div class="table-wrap">
       <div class="table-title">
-        <span>Detalle completo — todos los equipos</span>
-        <span id="cnt-total" style="color:var(--text2);font-family:var(--mono);font-size:12px;"></span>
+        <span>Detalle de horas usadas por equipo</span>
+        <span id="uso-periodo-lbl" style="color:var(--text2);font-family:var(--mono);font-size:11px;"></span>
       </div>
       <div style="overflow-x:auto">
         <table>
-          <thead><tr><th>Código / ID</th><th>Tipo</th><th>Planta / CD</th><th>Marca</th><th>Horómetro actual</th><th>Última actualización</th><th>Estado horómetro</th></tr></thead>
-          <tbody id="tbody-all"></tbody>
+          <thead>
+            <tr>
+              <th>Código / ID</th>
+              <th>Tipo</th>
+              <th>Planta / CD</th>
+              <th>Marca</th>
+              <th>Horo. mes anterior</th>
+              <th>Horo. mes actual</th>
+              <th>Horas usadas</th>
+              <th>Estado</th>
+            </tr>
+          </thead>
+          <tbody id="tbody-uso"></tbody>
         </table>
       </div>
     </div>
@@ -289,11 +323,13 @@ tr:hover td{background:var(--surf2);}
 const SUPA_URL = 'https://njmswjinwrcxsfduchsc.supabase.co';
 const SUPA_KEY = 'sb_publishable_KKD-gJzg0Urws7ff-h5XFg_91sL146J';
 const sb = supabase.createClient(SUPA_URL, SUPA_KEY);
-const PIN_CORRECTO = '26121994';
+const PIN_CORRECTO = '20262026';
 
 let pinActual = '';
 let EQUIPOS = [];
 let MANTS = [];
+let HORO_MES_ANT = {}; // {equipo_id: horometro} del mes anterior
+let HORO_MES_ACT = {}; // {equipo_id: horometro} del mes actual
 
 // ══ PIN ══════════════════════════════════════════════════
 function pinPress(d) {
@@ -363,13 +399,11 @@ async function cargarDatos() {
     if (e1) throw e1;
     EQUIPOS = eq;
 
-    // Cargar registros horómetros del mes (tabla horometros_registros)
+    // ── Mes actual ──────────────────────────────────────────
     const { data: horoRegs, error: e2 } = await sb.from('horometros_registros')
       .select('equipo_id,horometro,fecha_lectura,cd,codigo')
-      .eq('mes', mes)
-      .eq('anio', anio);
+      .eq('mes', mes).eq('anio', anio);
 
-    // Cargar mantenimientos del mes (también cuentan como actualización)
     const fechaIni = `${anio}-${String(mes).padStart(2,'0')}-01`;
     const fechaFin = `${anio}-${String(mes).padStart(2,'0')}-31`;
     const { data: mants, error: e3 } = await sb.from('mantenimientos')
@@ -377,20 +411,46 @@ async function cargarDatos() {
       .gte('fecha_mantenimiento', fechaIni)
       .lte('fecha_mantenimiento', fechaFin);
 
-    // Unir ambas fuentes: un equipo "actualizó" si tiene registro en cualquiera
+    // ── Mes anterior (para cálculo de uso real) ──────────
+    const mesAnt = mes === 1 ? 12 : mes - 1;
+    const anioAnt = mes === 1 ? anio - 1 : anio;
+    const { data: horoAnt } = await sb.from('horometros_registros')
+      .select('equipo_id,horometro')
+      .eq('mes', mesAnt).eq('anio', anioAnt);
+    const { data: mantsAnt } = await sb.from('mantenimientos')
+      .select('equipo_id,horometro,fecha_mantenimiento')
+      .gte('fecha_mantenimiento', `${anioAnt}-${String(mesAnt).padStart(2,'0')}-01`)
+      .lte('fecha_mantenimiento', `${anioAnt}-${String(mesAnt).padStart(2,'0')}-31`);
+
+    // Construir diccionarios horómetro máximo por equipo en cada mes
+    HORO_MES_ACT = {};
+    (horoRegs||[]).forEach(r => {
+      if(!HORO_MES_ACT[r.equipo_id] || r.horometro > HORO_MES_ACT[r.equipo_id])
+        HORO_MES_ACT[r.equipo_id] = r.horometro;
+    });
+    (mants||[]).forEach(m => {
+      if(!HORO_MES_ACT[m.equipo_id] || m.horometro > HORO_MES_ACT[m.equipo_id])
+        HORO_MES_ACT[m.equipo_id] = m.horometro;
+    });
+
+    HORO_MES_ANT = {};
+    (horoAnt||[]).forEach(r => {
+      if(!HORO_MES_ANT[r.equipo_id] || r.horometro > HORO_MES_ANT[r.equipo_id])
+        HORO_MES_ANT[r.equipo_id] = r.horometro;
+    });
+    (mantsAnt||[]).forEach(m => {
+      if(!HORO_MES_ANT[m.equipo_id] || m.horometro > HORO_MES_ANT[m.equipo_id])
+        HORO_MES_ANT[m.equipo_id] = m.horometro;
+    });
+
+    // Set de equipos que actualizaron en el mes actual
     const equiposConHoro = new Set([
       ...(horoRegs||[]).map(r => r.equipo_id),
       ...(mants||[]).map(m => m.equipo_id)
     ]);
-    // Guardar último horómetro del mes por equipo (de cualquier fuente)
     const horoDelMes = {};
-    (horoRegs||[]).forEach(r => {
-      if(!horoDelMes[r.equipo_id] || r.horometro > horoDelMes[r.equipo_id].horometro)
-        horoDelMes[r.equipo_id] = {horometro: r.horometro, fecha: r.fecha_lectura};
-    });
-    (mants||[]).forEach(m => {
-      if(!horoDelMes[m.equipo_id] || m.horometro > horoDelMes[m.equipo_id].horometro)
-        horoDelMes[m.equipo_id] = {horometro: m.horometro, fecha: m.fecha_mantenimiento};
+    Object.keys(HORO_MES_ACT).forEach(id => {
+      horoDelMes[id] = {horometro: HORO_MES_ACT[id]};
     });
     MANTS = mants || [];
     window._equiposConHoro = equiposConHoro;
@@ -532,18 +592,97 @@ function renderDashboard() {
     });
   }
 
-  // ── TABLA GENERAL ──────────────────────────────────────
-  document.getElementById('cnt-total').textContent = `${total} equipos`;
-  document.getElementById('tbody-all').innerHTML = equiposMont.map(e => {
-    const ok = actualizoEnMes(e);
-    return `<tr>
-      <td>${e.codigo||e.placa||e.id}</td>
-      <td style="color:var(--text2)">${e.tipo||'—'}</td>
-      <td>${e.cd||'—'}</td>
-      <td>${e.marca||'—'}</td>
-      <td>${getHoroMes(e)}</td>
-      <td>${getFechaMes(e)}</td>
-      <td><span class="badge ${ESTADOS_EXCLUIDOS.includes(e.status)?'b-na':ok?'b-ok':'b-pend'}">${ESTADOS_EXCLUIDOS.includes(e.status)?'— Excluido':ok?'✓ Al día':'✗ Pendiente'}</span></td>
+  // ── USO MENSUAL ────────────────────────────────────────
+  renderUsoMensual(equiposMont, mes, anio);
+}
+
+function renderUsoMensual(equipos, mes, anio) {
+  const meses = ['','Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  const mesAnt = mes === 1 ? 12 : mes - 1;
+  const anioAnt = mes === 1 ? anio - 1 : anio;
+
+  document.getElementById('uso-periodo-lbl').textContent =
+    `${meses[mesAnt]} ${anioAnt} → ${meses[mes]} ${anio}`;
+
+  // Calcular uso por equipo (solo los que tienen registro en AMBOS meses)
+  const usoData = [];
+  equipos.forEach(e => {
+    const hAct = HORO_MES_ACT[e.id];
+    const hAnt = HORO_MES_ANT[e.id];
+    const uso  = (hAct != null && hAnt != null) ? Math.round((hAct - hAnt) * 10) / 10 : null;
+    usoData.push({
+      id: e.id,
+      codigo: e.codigo || e.placa || e.id,
+      tipo: e.tipo || 'Montacargas',
+      cd: e.cd || '—',
+      marca: e.marca || '—',
+      status: e.status,
+      hAnt, hAct, uso
+    });
+  });
+
+  // ── BARRAS POR PLANTA ──────────────────────────────────
+  const CDS = [...new Set(equipos.map(e=>e.cd).filter(Boolean))].sort();
+  const plantGrid = document.getElementById('uso-plant-grid');
+  plantGrid.innerHTML = '';
+
+  // Paleta de colores por equipo (ciclo)
+  const PALETTE = ['#8b5cf6','#3b82f6','#10b981','#f59e0b','#ef4444','#06b6d4','#f97316','#84cc16','#ec4899','#6366f1'];
+
+  CDS.forEach(cd => {
+    const cdFiltro = document.getElementById('sel-cd').value;
+    if (cdFiltro && cd !== cdFiltro) return;
+    const eqCD = usoData.filter(e => e.cd === cd && e.uso !== null && e.uso >= 0);
+    if (!eqCD.length) return;
+
+    const totalHrs = eqCD.reduce((s, e) => s + e.uso, 0);
+    const maxUso   = Math.max(...eqCD.map(e => e.uso), 1);
+
+    const card = document.createElement('div');
+    card.className = 'uso-card';
+    let barsHtml = eqCD
+      .sort((a,b) => b.uso - a.uso)
+      .map((e, i) => `
+        <div class="uso-bar-row">
+          <div class="uso-bar-lbl" title="${e.codigo}">${e.codigo}</div>
+          <div class="uso-bar-track">
+            <div class="uso-bar-fill" style="width:${Math.round(e.uso/maxUso*100)}%;background:${PALETTE[i%PALETTE.length]}"></div>
+          </div>
+          <div class="uso-bar-val">${e.uso} hrs</div>
+        </div>`).join('');
+
+    card.innerHTML = `
+      <div class="uso-card-hdr">
+        <div><div class="uso-cd">${cd}</div><div class="uso-sub">${eqCD.length} equipos con datos</div></div>
+        <div class="uso-total">${Math.round(totalHrs)} hrs</div>
+      </div>
+      ${barsHtml}`;
+    plantGrid.appendChild(card);
+  });
+
+  // ── TABLA DETALLE ──────────────────────────────────────
+  const sorted = [...usoData].sort((a,b) => {
+    if (a.cd < b.cd) return -1;
+    if (a.cd > b.cd) return 1;
+    return (b.uso||0) - (a.uso||0);
+  });
+
+  document.getElementById('tbody-uso').innerHTML = sorted.map(e => {
+    const sinDatos = e.uso === null;
+    const negativo = e.uso !== null && e.uso < 0;
+    let badge, color;
+    if (sinDatos)  { badge='Sin datos';   color='b-na'; }
+    else if (negativo) { badge='⚠ Revisar'; color='b-pend'; }
+    else           { badge='✓ Calculado'; color='b-ok'; }
+    return `<tr ${sinDatos?'style="opacity:0.5"':''}>
+      <td>${e.codigo}</td>
+      <td style="color:var(--text2)">${e.tipo}</td>
+      <td>${e.cd}</td>
+      <td>${e.marca}</td>
+      <td style="font-family:var(--mono)">${e.hAnt!=null?e.hAnt+' hrs':'—'}</td>
+      <td style="font-family:var(--mono)">${e.hAct!=null?e.hAct+' hrs':'—'}</td>
+      <td style="font-family:var(--mono);font-weight:600;color:${e.uso>0?'var(--purple)':e.uso===0?'var(--text2)':'var(--red)'}">${e.uso!=null?e.uso+' hrs':'—'}</td>
+      <td><span class="badge ${color}">${badge}</span></td>
     </tr>`;
   }).join('');
 }
