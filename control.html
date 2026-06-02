@@ -419,7 +419,10 @@ function renderDashboard() {
   // Un equipo "actualizó" si: tiene registro en mantenimientos del mes
   // O si fecha_ultimo_mant cae en el mes seleccionado
   const equiposFiltro = cdFiltro ? EQUIPOS.filter(e => e.cd === cdFiltro) : EQUIPOS;
-  const equiposMont = equiposFiltro.filter(e => e.tipo === 'Montacargas' || e.tipo === 'Apilador' || e.tipo === 'Traspaleta' || !e.tipo || true);
+  const equiposMont = equiposFiltro; // todos los equipos para la tabla general
+  // Solo los operativos/en mant son requeridos para el control de horómetro
+  const ESTADOS_EXCLUIDOS = ['Inoperativo','En proceso de baja'];
+  const equiposRequeridos = equiposFiltro.filter(e => !ESTADOS_EXCLUIDOS.includes(e.status));
 
   function actualizoEnMes(eq) {
     // Usa el set pre-calculado con ambas fuentes (horometros_registros + mantenimientos)
@@ -444,18 +447,19 @@ function renderDashboard() {
     return fD(eq.fecha_ultimo_mant);
   }
 
-  const okList   = equiposMont.filter(e => actualizoEnMes(e));
-  const pendList = equiposMont.filter(e => !actualizoEnMes(e));
-  const total    = equiposMont.length;
+  const okList   = equiposRequeridos.filter(e => actualizoEnMes(e));
+  const pendList = equiposRequeridos.filter(e => !actualizoEnMes(e));
+  const inopList = equiposFiltro.filter(e => ESTADOS_EXCLUIDOS.includes(e.status));
+  const total    = equiposRequeridos.length; // solo los requeridos para el %
   const pctGlobal = total > 0 ? Math.round(okList.length / total * 100) : 0;
 
   // ── KPIs ──────────────────────────────────────────────
   const kpiEl = document.getElementById('kpi-row');
   kpiEl.innerHTML = `
-    <div class="kpi-card kpi-purple"><div class="kpi-num">${total}</div><div class="kpi-lbl">Total equipos</div></div>
-    <div class="kpi-card kpi-green"><div class="kpi-num">${okList.length}</div><div class="kpi-lbl">Actualizaron horómetro</div><div class="kpi-sub">En el período seleccionado</div></div>
-    <div class="kpi-card kpi-red"><div class="kpi-num">${pendList.length}</div><div class="kpi-lbl">Sin actualización</div><div class="kpi-sub">Pendientes en el mes</div></div>
-    <div class="kpi-card ${pctGlobal>=80?'kpi-green':pctGlobal>=50?'kpi-amber':'kpi-red'}"><div class="kpi-num">${pctGlobal}%</div><div class="kpi-lbl">Cumplimiento global</div></div>`;
+    <div class="kpi-card kpi-purple"><div class="kpi-num">${equiposFiltro.length}</div><div class="kpi-lbl">Total equipos</div><div class="kpi-sub">${inopList.length} excluidos (inoperativos)</div></div>
+    <div class="kpi-card kpi-green"><div class="kpi-num">${okList.length}</div><div class="kpi-lbl">Actualizaron horómetro</div><div class="kpi-sub">De ${total} equipos requeridos</div></div>
+    <div class="kpi-card kpi-red"><div class="kpi-num">${pendList.length}</div><div class="kpi-lbl">Pendientes</div><div class="kpi-sub">Sin registro en el mes</div></div>
+    <div class="kpi-card ${pctGlobal>=80?'kpi-green':pctGlobal>=50?'kpi-amber':'kpi-red'}"><div class="kpi-num">${pctGlobal}%</div><div class="kpi-lbl">% Cumplimiento</div><div class="kpi-sub">Solo equipos operativos</div></div>`;
 
   // ── POR PLANTA ─────────────────────────────────────────
   const CDS = [...new Set(EQUIPOS.map(e => e.cd).filter(Boolean))].sort();
@@ -468,8 +472,17 @@ function renderDashboard() {
 
   CDS.forEach(cd => {
     if (cdFiltro && cd !== cdFiltro) return;
-    const eqCD = equiposMont.filter(e => e.cd === cd);
-    if (!eqCD.length) return;
+    const eqCD      = equiposRequeridos.filter(e => e.cd === cd); // solo requeridos
+    const inopCD    = equiposFiltro.filter(e => e.cd === cd && ESTADOS_EXCLUIDOS.includes(e.status));
+    if (!eqCD.length && !inopCD.length) return;
+    if (!eqCD.length) { // todos inoperativos en este CD
+      const card = document.createElement('div');
+      card.className='plant-card';
+      card.style.borderColor='rgba(100,120,150,0.3)';
+      card.innerHTML=`<div class="plant-name">${cd}</div><div class="plant-pct" style="color:var(--text3)">N/A</div><div class="plant-sub">${inopCD.length} equipo(s) inoperativo(s)</div><div class="plant-bar"><div class="plant-bar-fill" style="width:100%;background:var(--text3)"></div></div>`;
+      plantGrid.appendChild(card);
+      return;
+    }
     const okCD = eqCD.filter(e => actualizoEnMes(e)).length;
     const pct  = Math.round(okCD / eqCD.length * 100);
     const cls  = pct === 100 ? 'completo' : pct >= 50 ? 'parcial' : 'pendiente';
@@ -478,10 +491,11 @@ function renderDashboard() {
 
     const card = document.createElement('div');
     card.className = `plant-card ${cls}`;
+    const inopCDn = inopCD.length;
     card.innerHTML = `
       <div class="plant-name">${cd}</div>
       <div class="plant-pct ${clsP}">${pct}%</div>
-      <div class="plant-sub">${okCD} de ${eqCD.length} equipos</div>
+      <div class="plant-sub">${okCD} de ${eqCD.length} operativos${inopCDn>0?' · '+inopCDn+' inop.':''}</div>
       <div class="plant-bar"><div class="plant-bar-fill" style="width:${pct}%;background:${fillColor}"></div></div>`;
     plantGrid.appendChild(card);
   });
@@ -509,6 +523,15 @@ function renderDashboard() {
     </tr>`).join('');
   document.getElementById('cnt-pend').textContent = pendList.length;
 
+  // Agregar fila separadora + inoperativos al final de tabla pendientes
+  if(inopList.length>0){
+    const tbPend=document.getElementById('tbody-pend');
+    tbPend.innerHTML += `<tr style="background:rgba(100,120,150,0.08)"><td colspan="4" style="font-size:10px;color:var(--text3);text-align:center;padding:6px;font-family:var(--sans);text-transform:uppercase;letter-spacing:.06em;">Excluidos — Inoperativos / En proceso de baja (${inopList.length})</td></tr>`;
+    inopList.forEach(e=>{
+      tbPend.innerHTML+=`<tr style="opacity:0.5"><td>${e.codigo||e.placa||e.id}</td><td style="color:var(--text3)">${e.cd||'—'}</td><td>${e.horometro_ultimo_mant?parseFloat(e.horometro_ultimo_mant)+' hrs':'—'}</td><td><span class="badge b-na">${e.status}</span></td></tr>`;
+    });
+  }
+
   // ── TABLA GENERAL ──────────────────────────────────────
   document.getElementById('cnt-total').textContent = `${total} equipos`;
   document.getElementById('tbody-all').innerHTML = equiposMont.map(e => {
@@ -520,7 +543,7 @@ function renderDashboard() {
       <td>${e.marca||'—'}</td>
       <td>${getHoroMes(e)}</td>
       <td>${getFechaMes(e)}</td>
-      <td><span class="badge ${ok?'b-ok':'b-pend'}">${ok?'✓ Al día':'✗ Pendiente'}</span></td>
+      <td><span class="badge ${ESTADOS_EXCLUIDOS.includes(e.status)?'b-na':ok?'b-ok':'b-pend'}">${ESTADOS_EXCLUIDOS.includes(e.status)?'— Excluido':ok?'✓ Al día':'✗ Pendiente'}</span></td>
     </tr>`;
   }).join('');
 }
