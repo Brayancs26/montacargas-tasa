@@ -138,7 +138,7 @@ input.fld:focus{border-color:var(--accent);}
     <div class="stat-card" style="cursor:pointer;" onclick="filtrarVencidos()" title="Clic para filtrar"><div class="stat-num c-red" id="s-venc">—</div><div class="stat-lbl">Mant. vencido</div></div>
   </div>
   <div class="toolbar">
-    <select class="filter-select" id="f-cd" onchange="applyFilters()"><option value="">Todos los CDs</option><option>Callao</option><option>Chimbote</option><option>Malabrigo</option><option>Matarani</option><option>Pisco</option><option>Pucusana</option><option>Vegueta</option></select>
+    <select class="filter-select" id="f-cd" onchange="applyFilters()"><option value="">Todos los CDs</option></select>
     <select class="filter-select" id="f-tipo" onchange="applyFilters()"><option value="">Todos los tipos</option><option>Montacargas</option><option>Apilador</option><option>Traspaleta</option></select>
     <select class="filter-select" id="f-status" onchange="applyFilters()"><option value="">Todos los estados</option><option>Operativo</option><option>Inoperativo</option><option>En proceso de baja</option></select>
     <select class="filter-select" id="f-mant" onchange="applyFilters()"><option value="">Todos los mant.</option><option value="vencido">🔴 Mant. vencido (+6 meses)</option><option value="ok">🟢 Al día</option><option value="sinregistro">⚫ Sin registro</option></select>
@@ -235,6 +235,12 @@ async function cargarDatos(){
     const{data:eqs,error:e1}=await sb.from('equipos').select('*').order('cd').order('id');
     if(e1)throw e1;
     EQ=eqs;
+    // Poblar select CDs dinámicamente
+    const selCD=document.getElementById('f-cd');
+    const cdActual=selCD.value;
+    const cdsUnicos=[...new Set(eqs.map(e=>e.cd).filter(Boolean))].sort();
+    selCD.innerHTML='<option value="">Todos los CDs</option>'+
+      cdsUnicos.map(cd=>`<option ${cd===cdActual?'selected':''}>${cd}</option>`).join('');
     const{data:mants,error:e2}=await sb.from('mantenimientos').select('*').order('created_at',{ascending:false});
     if(e2)throw e2;
     allMants=mants;
