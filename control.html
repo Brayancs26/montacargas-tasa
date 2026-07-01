@@ -317,7 +317,7 @@ tr:hover td{background:var(--surf2);}
     </div>
 
     <!-- GRÁFICO 4: PROMEDIO DE HORAS POR CD -->
-    <div class="sec-title">Horas promedio de uso por CD</div>
+    <div class="sec-title">Uso promedio por planta y área — horas acumuladas en horómetro</div>
     <div style="background:var(--surf);border:1px solid var(--bord);border-radius:var(--r);padding:14px 16px;margin-bottom:14px;">
       <div id="prom-cd-bars" style="display:flex;flex-direction:column;gap:8px;"></div>
     </div>
@@ -433,7 +433,7 @@ async function cargarDatos() {
     const anio = 2026;
 
     // Cargar equipos
-    const { data: eq, error: e1 } = await sb.from('equipos').select('id,codigo,placa,tipo,marca,cd,status,horometro_ultimo_mant,fecha_ultimo_mant').order('cd').order('id');
+    const { data: eq, error: e1 } = await sb.from('equipos').select('id,codigo,placa,tipo,marca,cd,area,status,horometro_ultimo_mant,fecha_ultimo_mant').order('cd').order('id');
     if (e1) throw e1;
     EQUIPOS = eq;
     // Poblar selector de CDs dinámicamente — conservar selección actual
@@ -803,49 +803,70 @@ function renderRanking() {
   }).join('');
 }
 
+// Paleta de colores por área
+const AREA_PALETTE = [
+  '#3b82f6','#10b981','#f59e0b','#8b5cf6',
+  '#ef4444','#06b6d4','#f97316','#84cc16','#ec4899','#6366f1'
+];
+
 function renderPromCD() {
-  // Horas promedio por CD usando horómetro actual de equipos operativos
   const cdFiltro = document.getElementById('sel-cd')?.value || '';
-  const CDS = [...new Set(EQUIPOS.map(e=>e.cd).filter(Boolean))].sort();
-
-  const data = CDS
-    .filter(cd => !cdFiltro || cd === cdFiltro)
-    .map(cd => {
-      const eqs = EQUIPOS.filter(e =>
-        e.cd === cd &&
-        e.horometro_ultimo_mant &&
-        parseFloat(e.horometro_ultimo_mant) > 0 &&
-        e.status !== 'Inoperativo' &&
-        e.status !== 'En proceso de baja'
-      );
-      if (!eqs.length) return null;
-      const total  = eqs.reduce((s,e) => s + parseFloat(e.horometro_ultimo_mant), 0);
-      const prom   = Math.round(total / eqs.length);
-      return { cd, prom, count: eqs.length, total: Math.round(total) };
-    })
-    .filter(Boolean)
-    .sort((a,b) => b.prom - a.prom);
-
-  const maxProm = data.length > 0 ? data[0].prom : 1;
   const cont = document.getElementById('prom-cd-bars');
   if (!cont) return;
 
-  if (!data.length) {
-    cont.innerHTML = '<div class="no-data">Sin datos suficientes</div>';
+  // Equipos válidos: con horómetro, operativos o en mant, con área
+  const eqsBase = EQUIPOS.filter(e =>
+    e.horometro_ultimo_mant &&
+    parseFloat(e.horometro_ultimo_mant) > 0 &&
+    e.status !== 'Inoperativo' &&
+    e.status !== 'En proceso de baja' &&
+    e.area
+  );
+
+  // Filtrar por CD si aplica
+  const eqsFilt = cdFiltro ? eqsBase.filter(e => e.cd === cdFiltro) : eqsBase;
+
+  if (!eqsFilt.length) {
+    cont.innerHTML = '<div class="no-data">Sin datos de área para este filtro</div>';
     return;
   }
 
+  // Agrupar por CD + Área
+  const grupos = {};
+  eqsFilt.forEach(e => {
+    const key = cdFiltro ? e.area : `${e.cd} · ${e.area}`;
+    if (!grupos[key]) grupos[key] = { horas: [], cd: e.cd, area: e.area };
+    grupos[key].horas.push(parseFloat(e.horometro_ultimo_mant));
+  });
+
+  // Calcular promedio por grupo
+  const data = Object.entries(grupos).map(([key, g]) => ({
+    key,
+    cd:    g.cd,
+    area:  g.area,
+    prom:  Math.round(g.horas.reduce((s,h) => s+h, 0) / g.horas.length),
+    count: g.horas.length,
+  })).sort((a,b) => b.prom - a.prom);
+
+  const maxProm = data[0]?.prom || 1;
+
+  // Asignar color por área (consistente)
+  const areas = [...new Set(data.map(d=>d.area))].sort();
+  const areaColor = {};
+  areas.forEach((a,i) => areaColor[a] = AREA_PALETTE[i % AREA_PALETTE.length]);
+
   cont.innerHTML = data.map(d => {
     const pct   = Math.round(d.prom / maxProm * 100);
-    const color = getCDColor(d.cd);
+    const color = cdFiltro ? areaColor[d.area] : getCDColor(d.cd);
+    const bgLight = color + '22';
     return `<div class="prom-row">
-      <div class="prom-lbl">${d.cd}</div>
+      <div class="prom-lbl" title="${d.key}">${d.key}</div>
       <div class="prom-track">
-        <div class="prom-fill" style="width:${pct}%;background:${color};">
+        <div class="prom-fill" style="width:${Math.max(pct,3)}%;background:${color};">
           <span class="prom-val">${d.prom.toLocaleString('es-PE')} hrs</span>
         </div>
       </div>
-      <div class="prom-sub">${d.count} equipos</div>
+      <div class="prom-sub" style="color:var(--text2)">${d.count} equipo${d.count>1?'s':''}</div>
     </div>`;
   }).join('');
 }
