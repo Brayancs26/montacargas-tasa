@@ -135,6 +135,19 @@ tr:hover td{background:var(--surf2);}
 .uso-bar-fill{height:100%;border-radius:2px;transition:width 0.5s;}
 .uso-bar-val{width:52px;font-size:9px;font-family:var(--mono);color:var(--text2);text-align:right;flex-shrink:0;}
 .no-data{text-align:center;padding:28px;color:var(--text3);font-size:12px;}
+.rank-row{display:flex;align-items:center;gap:8px;padding:3px 0;}
+.rank-num{width:24px;font-size:10px;font-weight:700;color:var(--text3);font-family:var(--mono);text-align:right;flex-shrink:0;}
+.rank-lbl{width:90px;font-size:11px;font-weight:600;color:var(--text);flex-shrink:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.rank-cd-badge{font-size:9px;padding:1px 6px;border-radius:3px;font-weight:600;flex-shrink:0;min-width:60px;text-align:center;}
+.rank-track{flex:1;height:18px;background:var(--surf2);border-radius:3px;overflow:hidden;position:relative;}
+.rank-fill{height:100%;border-radius:3px;display:flex;align-items:center;padding:0 6px;min-width:4px;}
+.rank-val{font-size:10px;font-weight:700;color:var(--text);position:absolute;right:6px;top:50%;transform:translateY(-50%);font-family:var(--mono);}
+.prom-row{display:flex;align-items:center;gap:10px;}
+.prom-lbl{width:100px;font-size:12px;font-weight:600;color:var(--text);flex-shrink:0;}
+.prom-track{flex:1;height:24px;background:var(--surf2);border-radius:3px;overflow:hidden;position:relative;}
+.prom-fill{height:100%;border-radius:3px;display:flex;align-items:center;padding:0 10px;}
+.prom-val{font-size:11px;font-weight:700;color:#fff;font-family:var(--mono);}
+.prom-sub{width:80px;font-size:10px;color:var(--text2);text-align:right;font-family:var(--mono);}
 
 @media(max-width:600px){
   .kpi-row{grid-template-columns:1fr 1fr;}
@@ -212,7 +225,7 @@ tr:hover td{background:var(--surf2);}
 <div class="period-bar">
   <div class="period-inner">
     <span class="period-label">Período:</span>
-    <select class="period-select" id="sel-mes" onchange="cargarDatos()">
+    <select class="period-select" id="sel-mes" onchange="localStorage.setItem('ctrl_mes',this.value);cargarDatos();">
       <option value="1">Enero 2026</option>
       <option value="2">Febrero 2026</option>
       <option value="3">Marzo 2026</option>
@@ -226,7 +239,7 @@ tr:hover td{background:var(--surf2);}
       <option value="11">Noviembre 2026</option>
       <option value="12">Diciembre 2026</option>
     </select>
-    <select class="period-select" id="sel-cd" onchange="renderDashboard()">
+    <select class="period-select" id="sel-cd" onchange="localStorage.setItem('ctrl_cd',this.value);renderDashboard();">
       <option value="">Todas las plantas</option>
     </select>
     <button class="btn-refresh" onclick="cargarDatos()">
@@ -282,6 +295,32 @@ tr:hover td{background:var(--surf2);}
 
     <!-- BARRAS POR PLANTA -->
     <div id="uso-plant-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px;margin-bottom:14px;"></div>
+
+    <!-- GRÁFICO 2: RANKING HORAS ACUMULADAS -->
+    <div class="sec-title" style="margin-top:8px">Ranking de horas acumuladas por equipo</div>
+    <div style="background:var(--surf);border:1px solid var(--bord);border-radius:var(--r);padding:14px 16px;margin-bottom:14px;">
+      <!-- Filtro CD para ranking -->
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap;">
+        <span style="font-size:11px;color:var(--text2);">Filtrar por CD:</span>
+        <select id="rank-cd-filter" onchange="renderRanking()" style="background:var(--surf2);border:1px solid var(--bord2);border-radius:var(--r-sm);color:var(--text);font-family:var(--sans);font-size:12px;padding:4px 28px 4px 8px;outline:none;cursor:pointer;appearance:none;background-image:url(&quot;data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%237a8fa8'/%3E%3C/svg%3E&quot;);background-repeat:no-repeat;background-position:right 8px center;">
+          <option value="">Todos los CDs</option>
+        </select>
+        <span style="font-size:11px;color:var(--text2);">Mostrar top:</span>
+        <select id="rank-top" onchange="renderRanking()" style="background:var(--surf2);border:1px solid var(--bord2);border-radius:var(--r-sm);color:var(--text);font-family:var(--sans);font-size:12px;padding:4px 28px 4px 8px;outline:none;cursor:pointer;appearance:none;background-image:url(&quot;data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%237a8fa8'/%3E%3C/svg%3E&quot;);background-repeat:no-repeat;background-position:right 8px center;">
+          <option value="10">Top 10</option>
+          <option value="15">Top 15</option>
+          <option value="20">Top 20</option>
+          <option value="999">Todos</option>
+        </select>
+      </div>
+      <div id="ranking-bars" style="display:flex;flex-direction:column;gap:5px;"></div>
+    </div>
+
+    <!-- GRÁFICO 4: PROMEDIO DE HORAS POR CD -->
+    <div class="sec-title">Horas promedio de uso por CD</div>
+    <div style="background:var(--surf);border:1px solid var(--bord);border-radius:var(--r);padding:14px 16px;margin-bottom:14px;">
+      <div id="prom-cd-bars" style="display:flex;flex-direction:column;gap:8px;"></div>
+    </div>
 
     <!-- TABLA DETALLE USO -->
     <div class="table-wrap">
@@ -349,6 +388,11 @@ function verificarPin() {
   if (pinActual === PIN_CORRECTO) {
     document.getElementById('lock-screen').style.display = 'none';
     document.getElementById('app').style.display = 'block';
+    // Restaurar período y planta guardados
+    const mesSaved = localStorage.getItem('ctrl_mes');
+    const cdSaved  = localStorage.getItem('ctrl_cd');
+    if (mesSaved) document.getElementById('sel-mes').value = mesSaved;
+    if (cdSaved)  document.getElementById('sel-cd').value  = cdSaved;
     cargarDatos();
   } else {
     const card = document.getElementById('lock-card');
@@ -596,6 +640,19 @@ function renderDashboard() {
 
   // ── USO MENSUAL ────────────────────────────────────────
   renderUsoMensual(equiposMont, mes, anio);
+
+  // ── RANKING Y PROMEDIO ──────────────────────────────────
+  // Poblar el filtro de CD del ranking
+  const rankSel = document.getElementById('rank-cd-filter');
+  if (rankSel) {
+    const rankCDActual = rankSel.value;
+    const cdsRank = [...new Set(EQUIPOS.map(e=>e.cd).filter(Boolean))].sort();
+    rankSel.innerHTML = '<option value="">Todos los CDs</option>' +
+      cdsRank.map(cd=>`<option ${cd===rankCDActual?'selected':''}>${cd}</option>`).join('');
+    if (rankCDActual) rankSel.value = rankCDActual;
+  }
+  renderRanking();
+  renderPromCD();
 }
 
 function renderUsoMensual(equipos, mes, anio) {
@@ -686,6 +743,110 @@ function renderUsoMensual(equipos, mes, anio) {
       <td style="font-family:var(--mono);font-weight:600;color:${e.uso>0?'var(--purple)':e.uso===0?'var(--text2)':'var(--red)'}">${e.uso!=null?e.uso+' hrs':'—'}</td>
       <td><span class="badge ${color}">${badge}</span></td>
     </tr>`;
+  }).join('');
+}
+
+// ── CD PALETTE (consistente entre gráficos) ──────────────
+const CD_PALETTE = {
+  'Callao':    '#3b82f6',
+  'Callao CHD':'#06b6d4',
+  'Chimbote':  '#10b981',
+  'Malabrigo': '#f59e0b',
+  'Matarani':  '#8b5cf6',
+  'Pisco':     '#ef4444',
+  'Pucusana':  '#f97316',
+  'Vegueta':   '#84cc16',
+};
+function getCDColor(cd) {
+  return CD_PALETTE[cd] || '#7a8fa8';
+}
+
+function renderRanking() {
+  const cdFilt = document.getElementById('rank-cd-filter')?.value || '';
+  const top    = parseInt(document.getElementById('rank-top')?.value || '10');
+
+  // Usar horómetro actual de cada equipo como proxy de horas acumuladas
+  let data = EQUIPOS
+    .filter(e => e.horometro_ultimo_mant && parseFloat(e.horometro_ultimo_mant) > 0)
+    .filter(e => !cdFilt || e.cd === cdFilt)
+    .map(e => ({
+      codigo: e.codigo || e.placa || e.id,
+      cd:     e.cd || '—',
+      horas:  parseFloat(e.horometro_ultimo_mant) || 0,
+      tipo:   e.tipo || 'Montacargas',
+    }))
+    .sort((a,b) => b.horas - a.horas)
+    .slice(0, top);
+
+  const maxH = data.length > 0 ? data[0].horas : 1;
+  const cont = document.getElementById('ranking-bars');
+  if (!cont) return;
+
+  if (!data.length) {
+    cont.innerHTML = '<div class="no-data">Sin datos de horómetro para este filtro</div>';
+    return;
+  }
+
+  cont.innerHTML = data.map((d, i) => {
+    const pct   = Math.round(d.horas / maxH * 100);
+    const color = getCDColor(d.cd);
+    const bgLight = color + '22';
+    return `<div class="rank-row">
+      <div class="rank-num">${i+1}</div>
+      <div class="rank-lbl" title="${d.codigo}">${d.codigo}</div>
+      <div class="rank-cd-badge" style="background:${bgLight};color:${color};">${d.cd}</div>
+      <div class="rank-track">
+        <div class="rank-fill" style="width:${pct}%;background:${color};opacity:0.85;"></div>
+        <span class="rank-val">${d.horas.toLocaleString('es-PE')} hrs</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderPromCD() {
+  // Horas promedio por CD usando horómetro actual de equipos operativos
+  const cdFiltro = document.getElementById('sel-cd')?.value || '';
+  const CDS = [...new Set(EQUIPOS.map(e=>e.cd).filter(Boolean))].sort();
+
+  const data = CDS
+    .filter(cd => !cdFiltro || cd === cdFiltro)
+    .map(cd => {
+      const eqs = EQUIPOS.filter(e =>
+        e.cd === cd &&
+        e.horometro_ultimo_mant &&
+        parseFloat(e.horometro_ultimo_mant) > 0 &&
+        e.status !== 'Inoperativo' &&
+        e.status !== 'En proceso de baja'
+      );
+      if (!eqs.length) return null;
+      const total  = eqs.reduce((s,e) => s + parseFloat(e.horometro_ultimo_mant), 0);
+      const prom   = Math.round(total / eqs.length);
+      return { cd, prom, count: eqs.length, total: Math.round(total) };
+    })
+    .filter(Boolean)
+    .sort((a,b) => b.prom - a.prom);
+
+  const maxProm = data.length > 0 ? data[0].prom : 1;
+  const cont = document.getElementById('prom-cd-bars');
+  if (!cont) return;
+
+  if (!data.length) {
+    cont.innerHTML = '<div class="no-data">Sin datos suficientes</div>';
+    return;
+  }
+
+  cont.innerHTML = data.map(d => {
+    const pct   = Math.round(d.prom / maxProm * 100);
+    const color = getCDColor(d.cd);
+    return `<div class="prom-row">
+      <div class="prom-lbl">${d.cd}</div>
+      <div class="prom-track">
+        <div class="prom-fill" style="width:${pct}%;background:${color};">
+          <span class="prom-val">${d.prom.toLocaleString('es-PE')} hrs</span>
+        </div>
+      </div>
+      <div class="prom-sub">${d.count} equipos</div>
+    </div>`;
   }).join('');
 }
 
