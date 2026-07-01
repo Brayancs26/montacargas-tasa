@@ -269,7 +269,8 @@ function renderStats(){
   const pctEl=document.getElementById('s-pct');
   pctEl.textContent=pct+'%';
   pctEl.style.color=pct>=90?'var(--green)':pct>=70?'var(--amber)':'var(--red)';
-  document.getElementById('hdr-sub').textContent=`${EQ.length} equipos · 7 CDs · ${new Date().toLocaleDateString('es-PE',{day:'2-digit',month:'short',year:'numeric'})}`;
+  const _cds=[...new Set(EQ.map(e=>e.cd).filter(Boolean))];
+  document.getElementById('hdr-sub').textContent=`${EQ.length} equipos · ${_cds.length} CDs · ${new Date().toLocaleDateString('es-PE',{day:'2-digit',month:'short',year:'numeric'})}`;
   const nVenc=EQ.filter(e=>{const l=live[e.id];if(!l?.fecha)return false;return Math.floor((new Date()-new Date(l.fecha+'T12:00:00'))/86400000)>180;}).length;
   document.getElementById('s-venc').textContent=nVenc;
   document.getElementById('filter-count').textContent=`${EQ.length} de ${EQ.length} equipos`;
