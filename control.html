@@ -316,10 +316,16 @@ tr:hover td{background:var(--surf2);}
       <div id="ranking-bars" style="display:flex;flex-direction:column;gap:5px;"></div>
     </div>
 
-    <!-- GRÁFICO 4: PROMEDIO DE HORAS POR CD -->
-    <div class="sec-title">Uso promedio por planta y área — horas acumuladas en horómetro</div>
+    <!-- GRÁFICO 4A: USO POR PLANTA DEL MES -->
+    <div class="sec-title" id="sec-uso-planta">Uso mensual por planta — horas operadas en el período</div>
     <div style="background:var(--surf);border:1px solid var(--bord);border-radius:var(--r);padding:14px 16px;margin-bottom:14px;">
-      <div id="prom-cd-bars" style="display:flex;flex-direction:column;gap:8px;"></div>
+      <div id="uso-planta-bars" style="display:flex;flex-direction:column;gap:6px;"></div>
+    </div>
+
+    <!-- GRÁFICO 4B: PROMEDIO POR ÁREA DEL MES -->
+    <div class="sec-title" id="sec-uso-area">Uso promedio por área — horas por equipo en el período</div>
+    <div style="background:var(--surf);border:1px solid var(--bord);border-radius:var(--r);padding:14px 16px;margin-bottom:14px;">
+      <div id="uso-area-bars" style="display:flex;flex-direction:column;gap:6px;"></div>
     </div>
 
     <!-- TABLA DETALLE USO -->
@@ -652,7 +658,7 @@ function renderDashboard() {
     if (rankCDActual) rankSel.value = rankCDActual;
   }
   renderRanking();
-  renderPromCD();
+  renderPromCD(); // llama renderUsoPlanta + renderUsoArea internamente
 }
 
 function renderUsoMensual(equipos, mes, anio) {
@@ -810,55 +816,123 @@ const AREA_PALETTE = [
 ];
 
 function renderPromCD() {
+  renderUsoPlanta();
+  renderUsoArea();
+}
+
+// ── Gráfico 4A: Total horas usadas por planta en el mes ───
+function renderUsoPlanta() {
+  const meses = ['','Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  const mes = parseInt(document.getElementById('sel-mes').value);
   const cdFiltro = document.getElementById('sel-cd')?.value || '';
-  const cont = document.getElementById('prom-cd-bars');
+  const cont = document.getElementById('uso-planta-bars');
+  const secTitle = document.getElementById('sec-uso-planta');
   if (!cont) return;
 
-  // Equipos válidos: con horómetro, operativos o en mant, con área
-  const eqsBase = EQUIPOS.filter(e =>
-    e.horometro_ultimo_mant &&
-    parseFloat(e.horometro_ultimo_mant) > 0 &&
-    e.status !== 'Inoperativo' &&
-    e.status !== 'En proceso de baja' &&
-    e.area
-  );
+  if (secTitle) secTitle.childNodes[0] &&
+    (secTitle.childNodes[0].textContent = `Uso mensual por planta — horas operadas en ${meses[mes]}`);
 
-  // Filtrar por CD si aplica
-  const eqsFilt = cdFiltro ? eqsBase.filter(e => e.cd === cdFiltro) : eqsBase;
+  // Calcular uso por equipo (horo_act - horo_ant)
+  const equiposBase = cdFiltro
+    ? EQUIPOS.filter(e => e.cd === cdFiltro)
+    : EQUIPOS;
 
-  if (!eqsFilt.length) {
-    cont.innerHTML = '<div class="no-data">Sin datos de área para este filtro</div>';
+  // Agrupar horas de uso por CD
+  const usoPorCD = {};
+  equiposBase.forEach(e => {
+    const hAct = HORO_MES_ACT[e.id];
+    const hAnt = HORO_MES_ANT[e.id];
+    if (hAct == null || hAnt == null) return;
+    const uso = hAct - hAnt;
+    if (uso < 0) return; // ignorar negativos
+    const cd = e.cd || '—';
+    if (!usoPorCD[cd]) usoPorCD[cd] = { total: 0, count: 0 };
+    usoPorCD[cd].total += uso;
+    usoPorCD[cd].count++;
+  });
+
+  const data = Object.entries(usoPorCD)
+    .map(([cd, v]) => ({ cd, total: Math.round(v.total * 10) / 10, count: v.count }))
+    .filter(d => d.total > 0)
+    .sort((a, b) => a.total - b.total); // menor a mayor
+
+  if (!data.length) {
+    cont.innerHTML = '<div class="no-data">Sin datos de uso para este período. Registra horómetros en el mes anterior y actual.</div>';
     return;
   }
 
-  // Agrupar por CD + Área
+  const maxVal = data[data.length - 1].total || 1;
+  cont.innerHTML = data.map(d => {
+    const pct = Math.round(d.total / maxVal * 100);
+    const color = getCDColor(d.cd);
+    return `<div class="prom-row">
+      <div class="prom-lbl">${d.cd}</div>
+      <div class="prom-track">
+        <div class="prom-fill" style="width:${Math.max(pct,3)}%;background:${color};">
+          <span class="prom-val">${d.total.toLocaleString('es-PE')} hrs</span>
+        </div>
+      </div>
+      <div class="prom-sub">${d.count} equipo${d.count>1?'s':''}</div>
+    </div>`;
+  }).join('');
+}
+
+// ── Gráfico 4B: Uso promedio por área en el mes ───────────
+function renderUsoArea() {
+  const meses = ['','Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  const mes = parseInt(document.getElementById('sel-mes').value);
+  const cdFiltro = document.getElementById('sel-cd')?.value || '';
+  const cont = document.getElementById('uso-area-bars');
+  const secTitle = document.getElementById('sec-uso-area');
+  if (!cont) return;
+
+  if (secTitle) secTitle.childNodes[0] &&
+    (secTitle.childNodes[0].textContent = `Uso promedio por área — horas por equipo en ${meses[mes]}`);
+
+  const equiposBase = cdFiltro
+    ? EQUIPOS.filter(e => e.cd === cdFiltro && e.area)
+    : EQUIPOS.filter(e => e.area);
+
+  // Agrupar horas por CD+Área o solo Área si hay filtro de CD
   const grupos = {};
-  eqsFilt.forEach(e => {
+  equiposBase.forEach(e => {
+    const hAct = HORO_MES_ACT[e.id];
+    const hAnt = HORO_MES_ANT[e.id];
+    if (hAct == null || hAnt == null) return;
+    const uso = hAct - hAnt;
+    if (uso < 0) return;
     const key = cdFiltro ? e.area : `${e.cd} · ${e.area}`;
     if (!grupos[key]) grupos[key] = { horas: [], cd: e.cd, area: e.area };
-    grupos[key].horas.push(parseFloat(e.horometro_ultimo_mant));
+    grupos[key].horas.push(uso);
   });
 
   // Calcular promedio por grupo
-  const data = Object.entries(grupos).map(([key, g]) => ({
-    key,
-    cd:    g.cd,
-    area:  g.area,
-    prom:  Math.round(g.horas.reduce((s,h) => s+h, 0) / g.horas.length),
-    count: g.horas.length,
-  })).sort((a,b) => b.prom - a.prom);
+  const data = Object.entries(grupos)
+    .map(([key, g]) => ({
+      key,
+      cd:   g.cd,
+      area: g.area,
+      prom: Math.round(g.horas.reduce((s,h)=>s+h,0) / g.horas.length * 100) / 100,
+      count: g.horas.length,
+    }))
+    .filter(d => d.prom > 0)
+    .sort((a, b) => a.prom - b.prom); // menor a mayor
 
-  const maxProm = data[0]?.prom || 1;
+  if (!data.length) {
+    cont.innerHTML = '<div class="no-data">Sin datos de área para este período.</div>';
+    return;
+  }
 
-  // Asignar color por área (consistente)
+  // Asignar color por área
   const areas = [...new Set(data.map(d=>d.area))].sort();
   const areaColor = {};
   areas.forEach((a,i) => areaColor[a] = AREA_PALETTE[i % AREA_PALETTE.length]);
 
+  const maxProm = data[data.length - 1].prom || 1;
+
   cont.innerHTML = data.map(d => {
     const pct   = Math.round(d.prom / maxProm * 100);
     const color = cdFiltro ? areaColor[d.area] : getCDColor(d.cd);
-    const bgLight = color + '22';
     return `<div class="prom-row">
       <div class="prom-lbl" title="${d.key}">${d.key}</div>
       <div class="prom-track">
@@ -866,7 +940,7 @@ function renderPromCD() {
           <span class="prom-val">${d.prom.toLocaleString('es-PE')} hrs</span>
         </div>
       </div>
-      <div class="prom-sub" style="color:var(--text2)">${d.count} equipo${d.count>1?'s':''}</div>
+      <div class="prom-sub">${d.count} equipo${d.count>1?'s':''}</div>
     </div>`;
   }).join('');
 }
