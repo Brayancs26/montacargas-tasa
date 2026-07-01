@@ -228,8 +228,6 @@ tr:hover td{background:var(--surf2);}
     </select>
     <select class="period-select" id="sel-cd" onchange="renderDashboard()">
       <option value="">Todas las plantas</option>
-      <option>Callao</option><option>Chimbote</option><option>Malabrigo</option>
-      <option>Matarani</option><option>Pisco</option><option>Pucusana</option><option>Vegueta</option>
     </select>
     <button class="btn-refresh" onclick="cargarDatos()">
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
@@ -394,6 +392,14 @@ async function cargarDatos() {
     const { data: eq, error: e1 } = await sb.from('equipos').select('id,codigo,placa,tipo,marca,cd,status,horometro_ultimo_mant,fecha_ultimo_mant').order('cd').order('id');
     if (e1) throw e1;
     EQUIPOS = eq;
+    // Poblar selector de CDs dinámicamente — conservar selección actual
+    const selCDctrl = document.getElementById('sel-cd');
+    const cdSelActual = selCDctrl.value; // guardar antes de reconstruir
+    const cdsCtrl = [...new Set(eq.map(e=>e.cd).filter(Boolean))].sort();
+    selCDctrl.innerHTML = '<option value="">Todas las plantas</option>' +
+      cdsCtrl.map(cd=>`<option ${cd===cdSelActual?'selected':''}>${cd}</option>`).join('');
+    // Restaurar valor explícitamente (por si el option no quedó selected)
+    if(cdSelActual) selCDctrl.value = cdSelActual;
 
     // ── Mes actual ──────────────────────────────────────────
     const { data: horoRegs, error: e2 } = await sb.from('horometros_registros')
