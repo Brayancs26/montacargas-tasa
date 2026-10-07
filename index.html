@@ -247,6 +247,10 @@ async function cargarOperatividad(){
   try {
     // Montacargas: operativos / total
     const{data:eq}  = await _sb.from('equipos').select('status');
+    // Actualizar contador excluyendo Baja definitiva
+    const eqActivos=(eq||[]).filter(x=>x.status!=='Baja definitiva');
+    const elEq=document.querySelector('.hstat-num[style*="60a5fa"]');
+    if(elEq) elEq.textContent=eqActivos.length;
     // Balanzas: operativas / total
     const{data:bal} = await _sb.from('balanzas').select('status');
     // Contómetros: operativos / total
@@ -254,7 +258,10 @@ async function cargarOperatividad(){
 
     const pct = (arr) => {
       if(!arr||!arr.length) return null;
-      return Math.round(arr.filter(x=>x.status==='Operativo').length / arr.length * 100);
+      // Excluir 'Baja definitiva' del total — ya no existen en almacén
+      const activos = arr.filter(x=>x.status !== 'Baja definitiva');
+      if(!activos.length) return null;
+      return Math.round(activos.filter(x=>x.status==='Operativo').length / activos.length * 100);
     };
 
     const pcts = [pct(eq), pct(bal), pct(cont)].filter(x=>x!==null);
