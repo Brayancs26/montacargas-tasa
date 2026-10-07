@@ -176,12 +176,18 @@ input.fld:focus{border-color:var(--accent);}
       <!-- PANEL: solo estado -->
       <div id="panel-estado">
         <label class="fld" style="margin-bottom:10px;display:block;">Selecciona el estado actual del equipo</label>
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
           <button type="button" onclick="setEstado('Operativo')" id="eb-op" style="padding:14px 6px;border-radius:var(--r-sm);border:1.5px solid rgba(16,185,129,0.3);background:rgba(16,185,129,0.08);color:var(--green);font-size:12px;font-weight:600;cursor:pointer;font-family:var(--sans);transition:all 0.15s;">✓ Operativo</button>
           <button type="button" onclick="setEstado('Inoperativo')" id="eb-inop" style="padding:14px 6px;border-radius:var(--r-sm);border:1.5px solid rgba(239,68,68,0.3);background:rgba(239,68,68,0.06);color:var(--red);font-size:12px;font-weight:600;cursor:pointer;font-family:var(--sans);transition:all 0.15s;">✕ Inoperativo</button>
-          <button type="button" onclick="setEstado('En proceso de baja')" id="eb-baja" style="padding:14px 6px;border-radius:var(--r-sm);border:1.5px solid rgba(245,158,11,0.3);background:rgba(245,158,11,0.06);color:var(--amber);font-size:12px;font-weight:600;cursor:pointer;font-family:var(--sans);transition:all 0.15s;">↓ En baja</button>
         </div>
-        <p style="font-size:11px;color:var(--text3);margin-top:10px;">Solo actualiza el estado del equipo sin registrar mantenimiento.</p>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+          <button type="button" onclick="setEstado('En proceso de baja')" id="eb-baja" style="padding:14px 6px;border-radius:var(--r-sm);border:1.5px solid rgba(245,158,11,0.3);background:rgba(245,158,11,0.06);color:var(--amber);font-size:12px;font-weight:600;cursor:pointer;font-family:var(--sans);transition:all 0.15s;">↓ Para baja</button>
+          <button type="button" onclick="solicitarPinBaja()" id="eb-baja-def" style="padding:14px 6px;border-radius:var(--r-sm);border:1.5px solid rgba(139,92,246,0.3);background:rgba(139,92,246,0.06);color:#a78bfa;font-size:12px;font-weight:600;cursor:pointer;font-family:var(--sans);transition:all 0.15s;">🔒 Dar baja</button>
+        </div>
+        <p style="font-size:11px;color:var(--text3);margin-top:10px;">
+          <strong style="color:var(--amber)">Proponer baja</strong>: visible para todos. Inicia el proceso.<br>
+          <strong style="color:#a78bfa">Dar de baja</strong>: requiere clave. El equipo sale del indicador de operatividad.
+        </p>
       </div>
 
       <!-- PANEL: mantenimiento completo -->
@@ -256,10 +262,12 @@ async function cargarDatos(){
   sync(false);
 }
 function renderStats(){
-  const total=EQ.length;
-  const nOp=EQ.filter(e=>e.status==='Operativo').length;
-  const nInop=EQ.filter(e=>e.status==='Inoperativo').length;
-  const nBaja=EQ.filter(e=>e.status==='En proceso de baja').length;
+  // Excluir 'Baja definitiva' del total y del indicador
+  const eqActivos=EQ.filter(e=>e.status!=='Baja definitiva');
+  const total=eqActivos.length;
+  const nOp=eqActivos.filter(e=>e.status==='Operativo').length;
+  const nInop=eqActivos.filter(e=>e.status==='Inoperativo').length;
+  const nBaja=eqActivos.filter(e=>e.status==='En proceso de baja').length;
   const pct=total>0?Math.round(nOp/total*100):0;
   document.getElementById('s-total').textContent=total;
   document.getElementById('s-op').textContent=nOp;
@@ -281,7 +289,8 @@ function filtrarVencidos(){
 }
 function applyFilters(){
   const cd=document.getElementById('f-cd').value,tipo=document.getElementById('f-tipo').value,st=document.getElementById('f-status').value,q=document.getElementById('f-search').value.toLowerCase(),mant=document.getElementById('f-mant').value;
-  filtered=EQ.filter(e=>{
+  filtered=EQ.filter(e=>{ if(e.status==='Baja definitiva') return false; // ocultar dados de baja definitiva
+
     if(cd&&e.cd!==cd)return false;
     if(tipo&&e.tipo!==tipo)return false;
     if(st&&e.status!==st)return false;
@@ -324,7 +333,7 @@ async function openModal(id){
   nuevoEstado=null;
   modoTab='estado';
   setTab('estado');
-  ['eb-op','eb-inop','eb-baja','mb-op','mb-inop','mb-baja'].forEach(id=>{const el=document.getElementById(id);if(el){el.style.opacity='1';el.style.boxShadow='none';}});
+  ['eb-op','eb-inop','eb-baja','eb-baja-def','mb-op','mb-inop','mb-baja'].forEach(id=>{const el=document.getElementById(id);if(el){el.style.opacity='1';el.style.boxShadow='none';}});
   const eAct=EQ.find(x=>x.id===id);
   if(eAct) setEstado(eAct.status);
   document.getElementById('save-lbl').textContent='✓ Guardar en Supabase';document.getElementById('btn-save').disabled=false;
@@ -358,11 +367,11 @@ function setTab(tab){
 
 function setEstado(v){
   nuevoEstado=v;
-  ['eb-op','eb-inop','eb-baja','mb-op','mb-inop','mb-baja'].forEach(id=>{
+  ['eb-op','eb-inop','eb-baja','eb-baja-def','mb-op','mb-inop','mb-baja'].forEach(id=>{
     const el=document.getElementById(id);
     if(el){el.style.opacity='0.4';el.style.boxShadow='none';}
   });
-  const map={'Operativo':['eb-op','mb-op'],'Inoperativo':['eb-inop','mb-inop'],'En proceso de baja':['eb-baja','mb-baja']};
+  const map={'Operativo':['eb-op','mb-op'],'Inoperativo':['eb-inop','mb-inop'],'En proceso de baja':['eb-baja','mb-baja'],'Baja definitiva':['eb-baja-def']};
   (map[v]||[]).forEach(id=>{
     const el=document.getElementById(id);
     if(el){el.style.opacity='1';el.style.boxShadow='0 0 0 2px currentColor';}
@@ -370,6 +379,57 @@ function setEstado(v){
 }
 function closeModal(){document.getElementById('overlay').classList.remove('open');document.body.style.overflow='';activeId=null;const btn=document.getElementById('btn-save');if(btn){btn.disabled=false;btn.innerHTML='<span id="save-lbl">✓ Guardar en Supabase</span>';}}
 function closeBg(e){if(e.target===document.getElementById('overlay'))closeModal();}
+const PIN_BAJA_DEF = '20262026';
+let pinBajaActual = '';
+
+function solicitarPinBaja() {
+  const eq = EQ.find(x=>x.id===activeId);
+  document.getElementById('pin-baja-equipo-lbl').textContent =
+    `Equipo: ${eq?.codigo||eq?.placa||activeId} · ${eq?.cd||''}`;
+  pinBajaActual = '';
+  actualizarDotsBaja();
+  document.getElementById('pin-baja-error').style.display='none';
+  document.getElementById('pin-baja-overlay').style.display='flex';
+}
+
+function cerrarPinBaja() {
+  document.getElementById('pin-baja-overlay').style.display='none';
+  pinBajaActual = '';
+  actualizarDotsBaja();
+}
+
+function pinBajaPress(d) {
+  if (pinBajaActual.length >= 8) return;
+  pinBajaActual += d;
+  actualizarDotsBaja();
+  if (pinBajaActual.length === 8) verificarPinBaja();
+}
+
+function pinBajaDel() {
+  pinBajaActual = pinBajaActual.slice(0,-1);
+  actualizarDotsBaja();
+  document.getElementById('pin-baja-error').style.display='none';
+}
+
+function actualizarDotsBaja() {
+  for(let i=0;i<8;i++){
+    const d=document.getElementById('pbd'+i);
+    if(d) d.classList.toggle('filled', i < pinBajaActual.length);
+  }
+}
+
+function verificarPinBaja() {
+  if(pinBajaActual === PIN_BAJA_DEF){
+    cerrarPinBaja();
+    setEstado('Baja definitiva');
+    showToast('🔒 Acceso autorizado — selecciona Guardar para confirmar la baja definitiva');
+  } else {
+    document.getElementById('pin-baja-error').style.display='block';
+    pinBajaActual='';
+    actualizarDotsBaja();
+  }
+}
+
 async function guardar(){
   const sup=document.getElementById('sup-name').value.trim()||'Sin nombre';
   const btn=document.getElementById('btn-save');
