@@ -180,13 +180,13 @@ input.fld:focus{border-color:var(--accent);}
           <button type="button" onclick="setEstado('Operativo')" id="eb-op" style="padding:14px 6px;border-radius:var(--r-sm);border:1.5px solid rgba(16,185,129,0.3);background:rgba(16,185,129,0.08);color:var(--green);font-size:12px;font-weight:600;cursor:pointer;font-family:var(--sans);transition:all 0.15s;">✓ Operativo</button>
           <button type="button" onclick="setEstado('Inoperativo')" id="eb-inop" style="padding:14px 6px;border-radius:var(--r-sm);border:1.5px solid rgba(239,68,68,0.3);background:rgba(239,68,68,0.06);color:var(--red);font-size:12px;font-weight:600;cursor:pointer;font-family:var(--sans);transition:all 0.15s;">✕ Inoperativo</button>
         </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
-          <button type="button" onclick="setEstado('En proceso de baja')" id="eb-baja" style="padding:14px 6px;border-radius:var(--r-sm);border:1.5px solid rgba(245,158,11,0.3);background:rgba(245,158,11,0.06);color:var(--amber);font-size:12px;font-weight:600;cursor:pointer;font-family:var(--sans);transition:all 0.15s;">↓ Para baja</button>
-          <button type="button" onclick="solicitarPinBaja()" id="eb-baja-def" style="padding:14px 6px;border-radius:var(--r-sm);border:1.5px solid rgba(139,92,246,0.3);background:rgba(139,92,246,0.06);color:#a78bfa;font-size:12px;font-weight:600;cursor:pointer;font-family:var(--sans);transition:all 0.15s;">🔒 Dar baja</button>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;position:relative;z-index:1;">
+          <button type="button" onclick="setEstado('En proceso de baja')" id="eb-baja" style="padding:14px 6px;border-radius:var(--r-sm);border:1.5px solid rgba(245,158,11,0.3);background:rgba(245,158,11,0.06);color:var(--amber);font-size:13px;font-weight:700;cursor:pointer;font-family:var(--sans);transition:all 0.15s;position:relative;z-index:2;">↓ Para baja</button>
+          <button type="button" onclick="solicitarPinBaja()" id="eb-baja-def" style="padding:14px 6px;border-radius:var(--r-sm);border:1.5px solid rgba(139,92,246,0.3);background:rgba(139,92,246,0.06);color:#a78bfa;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--sans);transition:all 0.15s;position:relative;z-index:2;">🔒 Dar baja</button>
         </div>
-        <p style="font-size:11px;color:var(--text3);margin-top:10px;">
-          <strong style="color:var(--amber)">Proponer baja</strong>: visible para todos. Inicia el proceso.<br>
-          <strong style="color:#a78bfa">Dar de baja</strong>: requiere clave. El equipo sale del indicador de operatividad.
+        <p style="font-size:11px;color:var(--text3);margin-top:10px;pointer-events:none;">
+          <strong style="color:var(--amber)">Para baja</strong>: visible para todos. Inicia el proceso.<br>
+          <strong style="color:#a78bfa">Dar baja</strong>: requiere clave. El equipo sale del indicador de operatividad.
         </p>
       </div>
 
@@ -384,12 +384,14 @@ let pinBajaActual = '';
 
 function solicitarPinBaja() {
   const eq = EQ.find(x=>x.id===activeId);
-  document.getElementById('pin-baja-equipo-lbl').textContent =
-    `Equipo: ${eq?.codigo||eq?.placa||activeId} · ${eq?.cd||''}`;
+  const lbl = document.getElementById('pin-baja-equipo-lbl2');
+  if(lbl) lbl.textContent = `Equipo: ${eq?.codigo||eq?.placa||activeId} · ${eq?.cd||''}`;
   pinBajaActual = '';
   actualizarDotsBaja();
-  document.getElementById('pin-baja-error').style.display='none';
-  document.getElementById('pin-baja-overlay').style.display='flex';
+  const errEl = document.getElementById('pin-baja-error');
+  if(errEl) errEl.style.display='none';
+  const overlay = document.getElementById('pin-baja-overlay');
+  if(overlay){ overlay.style.display='flex'; }
 }
 
 function cerrarPinBaja() {
@@ -583,5 +585,41 @@ window.addEventListener('DOMContentLoaded',()=>{
   cargarDatos();
 });
 </script>
+
+<!-- MODAL PIN BAJA DEFINITIVA -->
+<div id="pin-baja-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.82);z-index:9999;align-items:center;justify-content:center;padding:20px;">
+  <div style="background:var(--surf);border:1px solid rgba(139,92,246,0.5);border-radius:16px;padding:28px 24px;width:100%;max-width:320px;text-align:center;">
+    <div style="width:48px;height:48px;border-radius:12px;background:rgba(139,92,246,0.15);border:1px solid rgba(139,92,246,0.3);display:flex;align-items:center;justify-content:center;margin:0 auto 14px;">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="2" stroke-linecap="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+    </div>
+    <div style="font-size:15px;font-weight:600;color:var(--text);margin-bottom:4px;">Dar baja definitiva</div>
+    <div id="pin-baja-equipo-lbl2" style="font-size:12px;color:var(--text2);margin-bottom:16px;"></div>
+    <div style="display:flex;gap:8px;justify-content:center;margin-bottom:14px;">
+      <div class="pbd" id="pbd0"></div><div class="pbd" id="pbd1"></div>
+      <div class="pbd" id="pbd2"></div><div class="pbd" id="pbd3"></div>
+      <div class="pbd" id="pbd4"></div><div class="pbd" id="pbd5"></div>
+      <div class="pbd" id="pbd6"></div><div class="pbd" id="pbd7"></div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px;">
+      <button onclick="pinBajaPress('1')" style="height:52px;border-radius:8px;border:1px solid var(--bord2);background:var(--surf2);color:var(--text);font-size:20px;font-weight:600;cursor:pointer;font-family:var(--sans);">1</button>
+      <button onclick="pinBajaPress('2')" style="height:52px;border-radius:8px;border:1px solid var(--bord2);background:var(--surf2);color:var(--text);font-size:20px;font-weight:600;cursor:pointer;font-family:var(--sans);">2</button>
+      <button onclick="pinBajaPress('3')" style="height:52px;border-radius:8px;border:1px solid var(--bord2);background:var(--surf2);color:var(--text);font-size:20px;font-weight:600;cursor:pointer;font-family:var(--sans);">3</button>
+      <button onclick="pinBajaPress('4')" style="height:52px;border-radius:8px;border:1px solid var(--bord2);background:var(--surf2);color:var(--text);font-size:20px;font-weight:600;cursor:pointer;font-family:var(--sans);">4</button>
+      <button onclick="pinBajaPress('5')" style="height:52px;border-radius:8px;border:1px solid var(--bord2);background:var(--surf2);color:var(--text);font-size:20px;font-weight:600;cursor:pointer;font-family:var(--sans);">5</button>
+      <button onclick="pinBajaPress('6')" style="height:52px;border-radius:8px;border:1px solid var(--bord2);background:var(--surf2);color:var(--text);font-size:20px;font-weight:600;cursor:pointer;font-family:var(--sans);">6</button>
+      <button onclick="pinBajaPress('7')" style="height:52px;border-radius:8px;border:1px solid var(--bord2);background:var(--surf2);color:var(--text);font-size:20px;font-weight:600;cursor:pointer;font-family:var(--sans);">7</button>
+      <button onclick="pinBajaPress('8')" style="height:52px;border-radius:8px;border:1px solid var(--bord2);background:var(--surf2);color:var(--text);font-size:20px;font-weight:600;cursor:pointer;font-family:var(--sans);">8</button>
+      <button onclick="pinBajaPress('9')" style="height:52px;border-radius:8px;border:1px solid var(--bord2);background:var(--surf2);color:var(--text);font-size:20px;font-weight:600;cursor:pointer;font-family:var(--sans);">9</button>
+      <button onclick="cerrarPinBaja()" style="height:52px;border-radius:8px;border:1px solid var(--bord2);background:transparent;color:var(--text2);font-size:11px;cursor:pointer;font-family:var(--sans);">Cancelar</button>
+      <button onclick="pinBajaPress('0')" style="height:52px;border-radius:8px;border:1px solid var(--bord2);background:var(--surf2);color:var(--text);font-size:20px;font-weight:600;cursor:pointer;font-family:var(--sans);">0</button>
+      <button onclick="pinBajaDel()" style="height:52px;border-radius:8px;border:1px solid var(--bord2);background:transparent;color:var(--text2);font-size:18px;cursor:pointer;font-family:var(--sans);">⌫</button>
+    </div>
+    <div id="pin-baja-error" style="color:var(--red);font-size:11px;display:none;margin-top:4px;">Clave incorrecta.</div>
+  </div>
+</div>
+<style>
+.pbd{width:13px;height:13px;border-radius:50%;border:2px solid rgba(139,92,246,0.35);transition:all 0.15s;flex-shrink:0;}
+.pbd.filled{background:#a78bfa;border-color:#a78bfa;}
+</style>
 </body>
 </html>
