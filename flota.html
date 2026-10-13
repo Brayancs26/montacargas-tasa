@@ -196,7 +196,26 @@ input.fld:focus{border-color:var(--accent);}
           <div><label class="fld">Fecha de mantenimiento *</label><input type="date" id="m-fecha" class="fld"></div>
           <div><label class="fld">Horómetro *</label><input type="number" id="m-horo" class="fld" placeholder="ej. 1250" inputmode="decimal" step="0.1"></div>
         </div>
-        
+        <div class="fld-grp" style="margin-bottom:10px;">
+          <label class="fld">Certificado / Informe de mantenimiento (opcional)</label>
+          <div id="cert-drop" onclick="document.getElementById('m-cert').click()" style="border:2px dashed var(--border);border-radius:10px;padding:18px 12px;text-align:center;cursor:pointer;transition:border-color .2s;background:rgba(255,255,255,0.03);">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--text2)" stroke-width="1.5" style="margin-bottom:6px;"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="12" x2="12" y2="18"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+            <p style="font-size:12px;color:var(--text2);margin:0;" id="cert-hint">Toca para adjuntar PDF, JPG o PNG</p>
+          </div>
+          <input type="file" id="m-cert" accept=".pdf,.jpg,.jpeg,.png" style="display:none;" onchange="previewCert(this)">
+          <div id="cert-preview" style="display:none;margin-top:8px;padding:10px 12px;background:rgba(37,99,235,0.1);border-radius:8px;border:1px solid rgba(37,99,235,0.3);display:none;align-items:center;gap:10px;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            <span id="cert-name" style="font-size:12px;color:#60a5fa;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></span>
+            <span id="cert-size" style="font-size:11px;color:var(--text2);"></span>
+            <button onclick="clearCert()" style="background:none;border:none;cursor:pointer;color:var(--text2);padding:2px 4px;font-size:14px;line-height:1;">✕</button>
+          </div>
+          <div id="cert-progress" style="display:none;margin-top:8px;">
+            <div style="height:4px;background:rgba(255,255,255,0.08);border-radius:4px;overflow:hidden;">
+              <div id="cert-bar" style="height:100%;width:0%;background:linear-gradient(90deg,#3b82f6,#60a5fa);transition:width .3s;border-radius:4px;"></div>
+            </div>
+            <p style="font-size:11px;color:var(--text2);margin:4px 0 0;" id="cert-prog-txt">Subiendo certificado...</p>
+          </div>
+        </div>
       </div>
 
       <!-- PANEL: solo horómetro -->
@@ -329,6 +348,7 @@ async function openModal(id){
   document.getElementById('m-info').innerHTML=fields.map(([k,v])=>`<div class="info-block"><div class="ib-key">${k}</div><div class="ib-val">${v||'—'}</div></div>`).join('');
   document.getElementById('m-fecha').value=new Date().toISOString().split('T')[0];
   document.getElementById('m-horo').value='';
+  clearCert();
   document.getElementById('m-fecha').style.borderColor='';document.getElementById('m-horo').style.borderColor='';
   nuevoEstado=null;
   modoTab='estado';
@@ -432,6 +452,42 @@ function verificarPinBaja() {
   }
 }
 
+function previewCert(input){
+  const file=input.files[0];
+  if(!file) return;
+  const mb=(file.size/1024/1024).toFixed(2);
+  if(file.size>20*1024*1024){showToast('Archivo muy grande. Máximo 20 MB.',true);input.value='';return;}
+  document.getElementById('cert-hint').textContent=file.name;
+  document.getElementById('cert-drop').style.borderColor='#3b82f6';
+  const prev=document.getElementById('cert-preview');
+  prev.style.display='flex';
+  document.getElementById('cert-name').textContent=file.name;
+  document.getElementById('cert-size').textContent=mb+' MB';
+}
+function clearCert(){
+  const inp=document.getElementById('m-cert');
+  if(inp) inp.value='';
+  document.getElementById('cert-hint').textContent='Toca para adjuntar PDF, JPG o PNG';
+  document.getElementById('cert-drop').style.borderColor='var(--border)';
+  const prev=document.getElementById('cert-preview');
+  prev.style.display='none';
+  document.getElementById('cert-progress').style.display='none';
+}
+async function uploadCert(file, equipoId, fecha){
+  const BUCKET='certificados-mantenimiento';
+  const ext=file.name.split('.').pop().toLowerCase();
+  const path=`${equipoId}/${fecha.replace(/-/g,'')}_${Date.now()}.${ext}`;
+  document.getElementById('cert-progress').style.display='block';
+  document.getElementById('cert-bar').style.width='30%';
+  document.getElementById('cert-prog-txt').textContent='Subiendo certificado...';
+  const{data,error}=await sb.storage.from(BUCKET).upload(path,file,{cacheControl:'3600',upsert:false});
+  if(error) throw new Error('Error al subir archivo: '+error.message);
+  document.getElementById('cert-bar').style.width='80%';
+  const{data:urlData}=sb.storage.from(BUCKET).getPublicUrl(path);
+  document.getElementById('cert-bar').style.width='100%';
+  document.getElementById('cert-prog-txt').textContent='¡Certificado guardado!';
+  return urlData.publicUrl;
+}
 async function guardar(){
   const sup=document.getElementById('sup-name').value.trim()||'Sin nombre';
   const btn=document.getElementById('btn-save');
@@ -478,12 +534,19 @@ async function guardar(){
     }
     setBtnLoading(true);
     try{
+      // 0. Subir certificado si hay archivo
+      let certUrl=null;
+      const certFile=document.getElementById('m-cert').files[0];
+      if(certFile){
+        certUrl=await uploadCert(certFile,savedId,fecha);
+      }
       // 1. Insertar en mantenimientos
       const{error:e1}=await sb.from('mantenimientos').insert({
         equipo_id:savedId,placa:e.codigo||e.placa||e.id,
         cd:e.cd,tipo:e.tipo,marca:e.marca,modelo:e.modelo,
         fecha_mantenimiento:fecha,horometro:parseFloat(horo),
-        supervisor:sup,estado:e.status
+        supervisor:sup,estado:e.status,
+        ...(certUrl?{certificado_url:certUrl}:{})
       });
       if(e1) throw e1;
       // 2. Actualizar fecha y horómetro (SIN tocar status)
