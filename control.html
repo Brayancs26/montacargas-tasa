@@ -441,13 +441,14 @@ async function cargarDatos() {
     // Cargar equipos
     const { data: eq, error: e1 } = await sb.from('equipos').select('id,codigo,placa,tipo,marca,cd,area,status,horometro_ultimo_mant,fecha_ultimo_mant').order('cd').order('id');
     if (e1) throw e1;
-    EQUIPOS = eq;
+    EQUIPOS = eq.filter(e => e.status !== 'Baja definitiva'); // excluir dados de baja definitiva
     // Poblar selector de CDs dinámicamente — conservar selección actual
     const selCDctrl = document.getElementById('sel-cd');
     const cdSelActual = selCDctrl.value; // guardar antes de reconstruir
-    const cdsCtrl = [...new Set(eq.map(e=>e.cd).filter(Boolean))].sort();
+    const cdsCtrl = [...new Set(EQUIPOS.map(e=>e.cd).filter(Boolean))].sort();
     selCDctrl.innerHTML = '<option value="">Todas las plantas</option>' +
       cdsCtrl.map(cd=>`<option ${cd===cdSelActual?'selected':''}>${cd}</option>`).join('');
+
     // Restaurar valor explícitamente (por si el option no quedó selected)
     if(cdSelActual) selCDctrl.value = cdSelActual;
 
@@ -568,7 +569,7 @@ function renderDashboard() {
   // ── KPIs ──────────────────────────────────────────────
   const kpiEl = document.getElementById('kpi-row');
   kpiEl.innerHTML = `
-    <div class="kpi-card kpi-purple"><div class="kpi-num">${equiposFiltro.length}</div><div class="kpi-lbl">Total equipos</div><div class="kpi-sub">${inopList.length} excluidos (inoperativos)</div></div>
+    <div class="kpi-card kpi-purple"><div class="kpi-num">${equiposFiltro.length}</div><div class="kpi-lbl">Total equipos</div><div class="kpi-sub">${inopList.length} excluidos (inop.) · Baja definitiva oculta</div></div>
     <div class="kpi-card kpi-green"><div class="kpi-num">${okList.length}</div><div class="kpi-lbl">Actualizaron horómetro</div><div class="kpi-sub">De ${total} equipos requeridos</div></div>
     <div class="kpi-card kpi-red"><div class="kpi-num">${pendList.length}</div><div class="kpi-lbl">Pendientes</div><div class="kpi-sub">Sin registro en el mes</div></div>
     <div class="kpi-card ${pctGlobal>=80?'kpi-green':pctGlobal>=50?'kpi-amber':'kpi-red'}"><div class="kpi-num">${pctGlobal}%</div><div class="kpi-lbl">% Cumplimiento</div><div class="kpi-sub">Solo equipos operativos</div></div>`;
