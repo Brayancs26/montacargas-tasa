@@ -329,7 +329,7 @@ tr:hover td{background:var(--surf2);}
     </div>
 
     <!-- GRÁFICO USO ACUMULADO POR PLANTA (primer registro → mes actual) -->
-    <div class="sec-title" id="sec-tendencia6m" style="margin-top:8px">Uso acumulado por planta — horas operadas desde primer registro al mes actual</div>
+    <div class="sec-title" id="sec-tendencia6m" style="margin-top:8px">Uso promedio por equipo — horas operadas por planta (primer registro → mes actual)</div>
     <div style="background:var(--surf);border:1px solid var(--bord);border-radius:var(--r);padding:14px 16px;margin-bottom:14px;">
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap;">
         <span style="font-size:11px;color:var(--text2);" id="tend-rango-lbl"></span>
@@ -1081,7 +1081,9 @@ function renderTendencia6M() {
 
   const lblTotal = document.getElementById('tend-total-label');
   const grandTotal = cds.reduce((a,cd)=>a+usoPorCD[cd].hrs,0);
-  if (lblTotal) lblTotal.textContent = grandTotal > 0 ? `Total: ${Math.round(grandTotal).toLocaleString()} hrs` : '';
+  const grandEq = cds.reduce((a,cd)=>a+usoPorCD[cd].equipos,0);
+  const grandProm = grandEq > 0 ? Math.round(grandTotal/grandEq) : 0;
+  if (lblTotal) lblTotal.textContent = grandProm > 0 ? `Promedio global: ${grandProm.toLocaleString()} hrs/equipo` : '';
 
   if (cds.length === 0) {
     cont.innerHTML = `<p style="font-size:12px;color:var(--text3);text-align:center;padding:24px 0;">Sin datos suficientes — registra horómetros en el mes actual y en meses anteriores.</p>`;
@@ -1102,8 +1104,8 @@ function renderTendencia6M() {
   cds.forEach((cd, i) => {
     const d = usoPorCD[cd];
     const y = 10 + i * (BAR_H + BAR_GAP);
-    const bw = Math.max(4, (d.hrs / maxHrs) * barMaxW);
     const promedio = Math.round(d.hrs / d.equipos);
+    const bw = Math.max(4, (promedio / maxHrs) * barMaxW);
     const color = getColor(cd);
 
     // Fondo barra
