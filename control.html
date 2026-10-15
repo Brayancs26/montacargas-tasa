@@ -328,18 +328,14 @@ tr:hover td{background:var(--surf2);}
       <div id="uso-area-bars" style="display:flex;flex-direction:column;gap:6px;"></div>
     </div>
 
-    <!-- GRÁFICO TENDENCIA 6 MESES -->
-    <div class="sec-title" id="sec-tendencia6m" style="margin-top:8px">Tendencia de uso — horas operadas últimos 6 meses</div>
+    <!-- GRÁFICO USO ACUMULADO POR PLANTA (primer registro → mes actual) -->
+    <div class="sec-title" id="sec-tendencia6m" style="margin-top:8px">Uso acumulado por planta — horas operadas desde primer registro al mes actual</div>
     <div style="background:var(--surf);border:1px solid var(--bord);border-radius:var(--r);padding:14px 16px;margin-bottom:14px;">
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap;">
-        <span style="font-size:11px;color:var(--text2);">Filtrar por CD:</span>
-        <select id="tend-cd" onchange="renderTendencia6M()" style="background:var(--surf2);border:1px solid var(--bord2);border-radius:var(--r-sm);color:var(--text);font-family:var(--sans);font-size:12px;padding:4px 28px 4px 8px;outline:none;cursor:pointer;appearance:none;background-image:url(&quot;data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2020/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%237a8fa8'/%3E%3C/svg%3E&quot;);background-repeat:no-repeat;background-position:right 8px center;">
-          <option value="">Todas las plantas</option>
-        </select>
-        <span style="font-size:11px;color:var(--text2);margin-left:auto;" id="tend-total-label"></span>
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap;">
+        <span style="font-size:11px;color:var(--text2);" id="tend-rango-lbl"></span>
+        <span style="font-size:11px;color:var(--text2);margin-left:auto;font-family:var(--mono);" id="tend-total-label"></span>
       </div>
-      <div id="tendencia6m-chart" style="position:relative;"></div>
-      <div id="tendencia6m-legend" style="display:flex;flex-wrap:wrap;gap:8px 16px;margin-top:10px;padding-top:10px;border-top:1px solid var(--bord);"></div>
+      <div id="tendencia6m-chart"></div>
     </div>
 
     <!-- TABLA DETALLE USO -->
@@ -1022,97 +1018,111 @@ function showToast(msg, err=false) {
   setTimeout(() => t.classList.remove('show'), 3000);
 }
 
-// ── TENDENCIA 6 MESES ──────────────────────────────────────
+// ── USO ACUMULADO POR PLANTA (primer registro → mes actual) ──
 function renderTendencia6M() {
   const cont = document.getElementById('tendencia6m-chart');
-  const legend = document.getElementById('tendencia6m-legend');
   if (!cont || !window._hist6 || !window._ultimos6) return;
-  const cdFiltro = (document.getElementById('tend-cd')||{}).value || '';
-  const MESES_NOM = ['','Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
-  const eqBase = cdFiltro ? EQUIPOS.filter(e=>e.cd===cdFiltro) : EQUIPOS;
-  const periodos = window._ultimos6;
-  const usoPorMesPorCD = {};
-  const usoPorMesTotal = [];
-  periodos.forEach((p, idx) => {
+
+  const MESES_NOM = ['','Enero','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+  const periodos = window._ultimos6; // [{mes, anio}, ...] orden cronológico
+  const mes = parseInt(document.getElementById('sel-mes').value);
+  const anio = 2026;
+
+  // Para cada equipo: horómetro en el mes actual (último período) y en el más antiguo disponible
+  const keyActual = `${periodos[periodos.length-1].mes}-${periodos[periodos.length-1].anio}`;
+  const horoActualMap = window._hist6[keyActual] || {};
+
+  // Buscar el primer registro disponible por equipo (el más antiguo de los 6 meses)
+  const horoPrimerMap = {}; // equipo_id → {horo, label}
+  periodos.forEach(p => {
     const key = `${p.mes}-${p.anio}`;
-    const keyAnt = idx > 0 ? `${periodos[idx-1].mes}-${periodos[idx-1].anio}` : null;
-    const horoAct = window._hist6[key] || {};
-    const horoAntMap = keyAnt ? (window._hist6[keyAnt] || {}) : {};
-    let totalMes = 0;
-    const usoXCD = {};
-    eqBase.forEach(eq => {
-      const hAct = horoAct[eq.id];
-      const hAnt = horoAntMap[eq.id];
-      if (hAct == null) return;
-      let delta = 0;
-      if (hAnt != null && hAct >= hAnt) {
-        delta = hAct - hAnt;
-      } else {
-        return; // sin referencia anterior, no calcular
+    const horoMes = window._hist6[key] || {};
+    Object.keys(horoMes).forEach(id => {
+      if (!horoPrimerMap[id]) {
+        horoPrimerMap[id] = { horo: horoMes[id], label: MESES_NOM[p.mes] + ' ' + p.anio };
       }
-      if (delta <= 0 || delta > 1500) return;
-      totalMes += delta;
-      const cd = eq.cd || 'Sin CD';
-      usoXCD[cd] = (usoXCD[cd]||0) + delta;
-    });
-    usoPorMesTotal.push(Math.round(totalMes));
-    Object.keys(usoXCD).forEach(cd => {
-      if (!usoPorMesPorCD[cd]) usoPorMesPorCD[cd] = Array(periodos.length).fill(0);
-      usoPorMesPorCD[cd][idx] = Math.round(usoXCD[cd]);
     });
   });
-  const cdsConDatos = Object.keys(usoPorMesPorCD).filter(cd => usoPorMesPorCD[cd].some(v=>v>0)).sort();
-  const maxVal = Math.max(...usoPorMesTotal, 1);
-  const labels = periodos.map(p=>`${MESES_NOM[p.mes]} ${p.anio}`);
+
+  // También incluir horometro_ultimo_mant del equipo si no hay registro histórico
+  EQUIPOS.forEach(eq => {
+    if (!horoPrimerMap[eq.id] && eq.horometro_ultimo_mant) {
+      horoPrimerMap[eq.id] = { horo: parseFloat(eq.horometro_ultimo_mant), label: 'Inicial' };
+    }
+  });
+
+  // Calcular horas usadas por CD: suma (horoActual - horoPrimero) de todos los equipos del CD
   const pal = {'Callao':'#3b82f6','Callao CHD':'#a78bfa','Chimbote':'#34d399','Malabrigo':'#f59e0b',
     'Matarani':'#f97316','Pisco':'#06b6d4','Pucusana':'#ec4899','Vegueta':'#84cc16','Sin CD':'#94a3b8'};
-  const getColor = (cd, i2) => pal[cd] || `hsl(${(i2*47)%360},65%,55%)`;
-  const W = Math.max(cont.clientWidth || 700, 400);
-  const H = 240;
-  const PAD = {t:24,r:20,b:40,l:52};
-  const chartW = W - PAD.l - PAD.r;
-  const chartH = H - PAD.t - PAD.b;
-  const gap = chartW / periodos.length;
-  const barW = Math.min(50, gap * 0.6);
-  let gridLines = '', yLabels = '';
-  for (let i = 0; i <= 4; i++) {
-    const val = Math.round((maxVal / 4) * i);
-    const y = PAD.t + chartH - (chartH * i / 4);
-    gridLines += `<line x1="${PAD.l}" y1="${y}" x2="${PAD.l+chartW}" y2="${y}" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>`;
-    yLabels += `<text x="${PAD.l-6}" y="${y+4}" text-anchor="end" font-size="10" fill="#7a8fa8">${val>=1000?(val/1000).toFixed(1)+'k':val}</text>`;
-  }
-  let bars = '', xLabels = '', linePts = [], dots = '';
-  periodos.forEach((p, idx) => {
-    const cx = PAD.l + gap * idx + gap/2;
-    let stackY = PAD.t + chartH;
-    cdsConDatos.forEach((cd, ci) => {
-      const val = (usoPorMesPorCD[cd]||[])[idx] || 0;
-      if (!val) return;
-      const bh = Math.max(2, (val / maxVal) * chartH);
-      stackY -= bh;
-      bars += `<rect x="${cx-barW/2}" y="${stackY}" width="${barW}" height="${bh}" fill="${getColor(cd,ci)}" opacity="0.85" rx="2"><title>${cd}: ${val} hrs · ${labels[idx]}</title></rect>`;
-    });
-    const tot = usoPorMesTotal[idx];
-    if (tot > 0) {
-      bars += `<text x="${cx}" y="${stackY-5}" text-anchor="middle" font-size="10" fill="#94a3b8" font-family="monospace">${tot>=1000?(tot/1000).toFixed(1)+'k':tot}</text>`;
-      const cy = PAD.t + chartH - (tot / maxVal) * chartH;
-      linePts.push({x:cx, y:cy, label:labels[idx], tot});
-    }
-    xLabels += `<text x="${cx}" y="${H-8}" text-anchor="middle" font-size="10" fill="#7a8fa8">${labels[idx]}</text>`;
+  const getColor = cd => pal[cd] || '#94a3b8';
+
+  const usoPorCD = {}; // cd → { hrs, equipos, ref_label }
+  EQUIPOS.forEach(eq => {
+    const hAct = horoActualMap[eq.id];
+    const primerReg = horoPrimerMap[eq.id];
+    if (hAct == null || primerReg == null) return;
+    const delta = hAct - primerReg.horo;
+    if (delta <= 0) return;
+    const cd = eq.cd || 'Sin CD';
+    if (!usoPorCD[cd]) usoPorCD[cd] = { hrs: 0, equipos: 0, ref_label: primerReg.label };
+    usoPorCD[cd].hrs += delta;
+    usoPorCD[cd].equipos++;
   });
-  let linePath = linePts.map((pt,i)=>(i===0?`M${pt.x},${pt.y}`:`L${pt.x},${pt.y}`)).join(' ');
-  dots = linePts.map(pt=>`<circle cx="${pt.x}" cy="${pt.y}" r="4" fill="#1e2a3a" stroke="#60a5fa" stroke-width="2.5"><title>${pt.label}: ${pt.tot} hrs</title></circle>`).join('');
-  cont.innerHTML = `<svg width="100%" viewBox="0 0 ${W} ${H}" style="overflow:visible;">
-    ${gridLines}${yLabels}${bars}
-    <path d="${linePath}" fill="none" stroke="#60a5fa" stroke-width="2" stroke-dasharray="5 3" opacity="0.8"/>
-    ${dots}${xLabels}
-  </svg>`;
-  legend.innerHTML = cdsConDatos.length > 0
-    ? cdsConDatos.map((cd,ci)=>`<span style="display:inline-flex;align-items:center;gap:5px;font-size:11px;color:var(--text2);"><span style="width:10px;height:10px;border-radius:2px;background:${getColor(cd,ci)};flex-shrink:0;"></span>${cd}</span>`).join('')
-    : `<span style="font-size:11px;color:var(--text3);">Sin datos suficientes — se necesitan registros en al menos 2 meses consecutivos.</span>`;
-  const grandTotal = usoPorMesTotal.reduce((a,b)=>a+b,0);
-  const lbl = document.getElementById('tend-total-label');
-  if (lbl) lbl.textContent = grandTotal > 0 ? `Total 6 meses: ${grandTotal.toLocaleString()} hrs` : '';
+
+  const cds = Object.keys(usoPorCD).sort((a,b) => (usoPorCD[b].hrs/usoPorCD[b].equipos) - (usoPorCD[a].hrs/usoPorCD[a].equipos));
+  const maxHrs = Math.max(...cds.map(cd => usoPorCD[cd].hrs / usoPorCD[cd].equipos), 1);
+
+  const mesActualNom = MESES_NOM[mes];
+
+  // Etiqueta de rango
+  const lblRango = document.getElementById('tend-rango-lbl');
+  const primerMes = periodos[0];
+  if (lblRango) lblRango.textContent = `Comparación: ${MESES_NOM[primerMes.mes]} ${primerMes.anio} → ${mesActualNom} ${anio}`;
+
+  const lblTotal = document.getElementById('tend-total-label');
+  const grandTotal = cds.reduce((a,cd)=>a+usoPorCD[cd].hrs,0);
+  if (lblTotal) lblTotal.textContent = grandTotal > 0 ? `Total: ${Math.round(grandTotal).toLocaleString()} hrs` : '';
+
+  if (cds.length === 0) {
+    cont.innerHTML = `<p style="font-size:12px;color:var(--text3);text-align:center;padding:24px 0;">Sin datos suficientes — registra horómetros en el mes actual y en meses anteriores.</p>`;
+    return;
+  }
+
+  // Dibujar barras horizontales — una por planta
+  const BAR_H = 34;
+  const BAR_GAP = 10;
+  const LABEL_W = 100;
+  const VAL_W = 64;
+  const PAD_R = 16;
+  const H = cds.length * (BAR_H + BAR_GAP) + 20;
+  const W = Math.max(cont.clientWidth || 600, 400);
+  const barMaxW = W - LABEL_W - VAL_W - PAD_R;
+
+  let svgContent = '';
+  cds.forEach((cd, i) => {
+    const d = usoPorCD[cd];
+    const y = 10 + i * (BAR_H + BAR_GAP);
+    const bw = Math.max(4, (d.hrs / maxHrs) * barMaxW);
+    const promedio = Math.round(d.hrs / d.equipos);
+    const color = getColor(cd);
+
+    // Fondo barra
+    svgContent += `<rect x="${LABEL_W}" y="${y}" width="${barMaxW}" height="${BAR_H}" fill="rgba(255,255,255,0.03)" rx="6"/>`;
+    // Barra real
+    svgContent += `<rect x="${LABEL_W}" y="${y}" width="${bw}" height="${BAR_H}" fill="${color}" opacity="0.85" rx="6"/>`;
+    // Etiqueta CD (izquierda)
+    svgContent += `<text x="${LABEL_W-8}" y="${y+BAR_H/2+4}" text-anchor="end" font-size="12" font-weight="600" fill="#e2e8f0">${cd}</text>`;
+    // Promedio dentro/derecha de barra
+    const hrsLabel = `${promedio.toLocaleString()} hrs/equipo`;
+    const textX = bw > 110 ? LABEL_W + bw - 8 : LABEL_W + bw + 6;
+    const textAnchor = bw > 110 ? 'end' : 'start';
+    const textFill = bw > 110 ? '#fff' : '#94a3b8';
+    svgContent += `<text x="${textX}" y="${y+BAR_H/2+4}" text-anchor="${textAnchor}" font-size="12" font-family="monospace" font-weight="700" fill="${textFill}">${hrsLabel}</text>`;
+    // Subtítulo: total y N equipos
+    svgContent += `<text x="${LABEL_W}" y="${y+BAR_H+BAR_GAP-1}" font-size="10" fill="#64748b">${Math.round(d.hrs).toLocaleString()} hrs totales · ${d.equipos} equipo${d.equipos!==1?'s':''}</text>`;
+  });
+
+  cont.innerHTML = `<svg width="100%" viewBox="0 0 ${W} ${H}" style="overflow:visible;">${svgContent}</svg>`;
 }
 </script>
 </body>
