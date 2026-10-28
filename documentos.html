@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="theme-color" content="#0a1628">
+<title>MaquiLog — Repositorio de Documentos</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap');
+:root{
+  --bg:#0a1628;--surf:#111e33;--surf2:#182540;--surf3:#1e2e4a;
+  --bord:rgba(255,255,255,0.07);--bord2:rgba(255,255,255,0.13);
+  --accent:#3b82f6;--accent2:#2563eb;
+  --green:#10b981;--amber:#f59e0b;--red:#ef4444;--blue:#3b82f6;
+  --text:#e2e8f0;--text2:#7a8fa8;--text3:#445566;
+  --mono:'IBM Plex Mono',monospace;--sans:'IBM Plex Sans',sans-serif;
+  --r:12px;--r-sm:8px;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:100vh;}
+.sync-bar{height:3px;background:var(--accent);position:fixed;top:0;left:0;right:0;z-index:999;display:none;}
+.sync-bar.on{display:block;animation:sb 1.4s ease-in-out infinite;}
+@keyframes sb{0%{transform:scaleX(0);transform-origin:left}50%{transform:scaleX(1);transform-origin:left}51%{transform:scaleX(1);transform-origin:right}100%{transform:scaleX(0);transform-origin:right}}
+.toast{position:fixed;bottom:24px;right:24px;z-index:9999;border-radius:10px;padding:12px 20px;font-size:13px;font-weight:600;display:none;align-items:center;gap:8px;}
+.toast.show{display:flex;}.toast.ok{background:var(--green);color:#0a1628;}.toast.err{background:var(--red);color:white;}
+
+.header{background:var(--surf);border-bottom:1px solid var(--bord2);padding:0 20px;position:sticky;top:0;z-index:100;}
+.header-inner{max-width:1100px;margin:0 auto;display:flex;align-items:center;gap:14px;height:58px;}
+.logo{width:34px;height:34px;border-radius:9px;background:var(--accent);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.header-title{font-size:15px;font-weight:600;}
+.header-sub{font-size:11px;color:var(--text2);margin-top:1px;font-family:var(--mono);}
+.db-status{display:flex;align-items:center;gap:5px;font-size:11px;font-family:var(--mono);}
+.db-dot{width:7px;height:7px;border-radius:50%;background:var(--text3);}
+.db-dot.ok{background:var(--green);}.db-dot.err{background:var(--red);}
+
+.main{max-width:1100px;margin:0 auto;padding:20px;}
+
+/* STATS */
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px;}
+.stat-card{background:var(--surf);border:1px solid var(--bord);border-radius:var(--r);padding:14px 16px;}
+.stat-num{font-size:26px;font-weight:600;font-family:var(--mono);line-height:1;}
+.stat-lbl{font-size:11px;color:var(--text2);margin-top:4px;text-transform:uppercase;letter-spacing:0.06em;}
+.c-blue{color:#60a5fa;}.c-amber{color:var(--amber);}.c-green{color:var(--green);}.c-purple{color:#a78bfa;}
+
+/* FILTROS */
+.filter-bar{background:var(--surf);border:1px solid var(--bord);border-radius:var(--r);padding:16px;margin-bottom:16px;}
+.filter-row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;}
+.filter-group{display:flex;flex-direction:column;gap:5px;min-width:160px;flex:1;}
+.filter-label{font-size:10px;text-transform:uppercase;letter-spacing:0.08em;color:var(--text3);}
+.fsel{width:100%;background:var(--surf2);border:1px solid var(--bord2);border-radius:var(--r-sm);color:var(--text);font-family:var(--sans);font-size:13px;padding:8px 28px 8px 10px;appearance:none;outline:none;cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%237a8fa8'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;}
+.fsel:focus{border-color:var(--accent);}
+.fsearch{width:100%;background:var(--surf2);border:1px solid var(--bord2);border-radius:var(--r-sm);color:var(--text);font-family:var(--sans);font-size:13px;padding:8px 12px;outline:none;}
+.fsearch:focus{border-color:var(--accent);}
+.fsearch::placeholder{color:var(--text3);}
+.filter-count{font-size:12px;color:var(--text2);font-family:var(--mono);white-space:nowrap;}
+
+/* TABLA */
+.doc-table-wrap{background:var(--surf);border:1px solid var(--bord);border-radius:var(--r);overflow:hidden;}
+.doc-table{width:100%;border-collapse:collapse;}
+.doc-table thead{background:var(--surf2);}
+.doc-table th{padding:10px 14px;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:0.07em;color:var(--text3);font-weight:600;border-bottom:1px solid var(--bord2);white-space:nowrap;}
+.doc-table td{padding:11px 14px;border-bottom:1px solid var(--bord);font-size:13px;vertical-align:middle;}
+.doc-table tr:last-child td{border-bottom:none;}
+.doc-table tr:hover td{background:var(--surf2);}
+.modulo-badge{padding:3px 8px;border-radius:5px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;white-space:nowrap;}
+.mod-montacargas{background:rgba(245,158,11,0.12);color:var(--amber);border:1px solid rgba(245,158,11,0.25);}
+.mod-contometros{background:rgba(245,158,11,0.12);color:#fcd34d;border:1px solid rgba(252,211,77,0.25);}
+.mod-balanzas{background:rgba(139,92,246,0.12);color:#a78bfa;border:1px solid rgba(139,92,246,0.25);}
+.tipo-badge{padding:2px 7px;border-radius:4px;font-size:10px;font-weight:600;white-space:nowrap;}
+.tipo-cal{background:rgba(59,130,246,0.1);color:#60a5fa;border:1px solid rgba(59,130,246,0.2);}
+.tipo-mant{background:rgba(16,185,129,0.1);color:var(--green);border:1px solid rgba(16,185,129,0.2);}
+.tipo-combo{background:rgba(245,158,11,0.1);color:var(--amber);border:1px solid rgba(245,158,11,0.2);}
+.code-cell{font-family:var(--mono);font-size:12px;color:var(--text);}
+.date-cell{font-family:var(--mono);font-size:12px;color:var(--text2);}
+.equipo-cell{font-size:13px;color:var(--text);}
+.equipo-sub{font-size:11px;color:var(--text3);margin-top:2px;}
+.btn-dl{display:inline-flex;align-items:center;gap:5px;background:var(--accent);color:white;border:none;border-radius:6px;padding:6px 12px;font-size:12px;font-weight:600;cursor:pointer;font-family:var(--sans);text-decoration:none;transition:all 0.15s;white-space:nowrap;}
+.btn-dl:hover{background:var(--accent2);}
+.btn-dl:active{transform:scale(0.96);}
+.btn-dl svg{width:13px;height:13px;flex-shrink:0;}
+.no-doc{display:inline-flex;align-items:center;gap:4px;font-size:11px;color:var(--text3);}
+
+/* EMPTY STATE */
+.empty-state{text-align:center;padding:60px 20px;color:var(--text3);}
+.empty-state svg{width:48px;height:48px;margin-bottom:12px;opacity:0.3;}
+.empty-state p{font-size:14px;}
+
+/* PAGINACIÓN */
+.pagination{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-top:1px solid var(--bord);}
+.page-info{font-size:12px;color:var(--text2);font-family:var(--mono);}
+.page-btns{display:flex;gap:6px;}
+.page-btn{background:var(--surf2);border:1px solid var(--bord2);border-radius:6px;color:var(--text2);font-size:12px;padding:5px 12px;cursor:pointer;font-family:var(--sans);}
+.page-btn:hover{border-color:var(--accent);color:var(--accent);}
+.page-btn:disabled{opacity:0.3;cursor:not-allowed;}
+.page-btn.active{background:var(--accent);border-color:var(--accent);color:white;}
+
+@media(max-width:700px){
+  .stats-row{grid-template-columns:1fr 1fr;}
+  .filter-row{flex-direction:column;}
+  .filter-group{min-width:100%;}
+  .doc-table th:nth-child(4),.doc-table td:nth-child(4),
+  .doc-table th:nth-child(5),.doc-table td:nth-child(5){display:none;}
+  .main{padding:12px;}
+}
+</style>
+</head>
+<body>
+<div class="sync-bar" id="sync-bar"></div>
+<div class="toast" id="toast"><span id="toast-msg"></span></div>
+
+<div class="header">
+  <div class="header-inner">
+    <div class="logo">
+      <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" width="18" height="18">
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+        <polyline points="14 2 14 8 20 8"/>
+        <line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>
+        <polyline points="10 9 9 9 8 9"/>
+      </svg>
+    </div>
+    <div>
+      <div class="header-title">MaquiLog — Repositorio de Documentos</div>
+      <div class="header-sub" id="hdr-sub">Certificados y constancias · Conectando...</div>
+    </div>
+    <div style="margin-left:auto;display:flex;align-items:center;gap:10px;">
+      <div class="db-status"><span class="db-dot" id="db-dot"></span><span id="db-txt" style="color:var(--text3)">Conectando...</span></div>
+      <a href="index.html" style="display:flex;align-items:center;gap:5px;background:var(--surf2);border:1px solid var(--bord);border-radius:var(--r-sm);padding:5px 12px;font-size:12px;color:var(--text2);text-decoration:none;white-space:nowrap;">← Menú</a>
+    </div>
+  </div>
+</div>
+
+<div class="main">
+  <!-- STATS -->
+  <div class="stats-row">
+    <div class="stat-card"><div class="stat-num c-blue" id="s-total">—</div><div class="stat-lbl">Total documentos</div></div>
+    <div class="stat-card"><div class="stat-num c-amber" id="s-montacargas">—</div><div class="stat-lbl">Montacargas</div></div>
+    <div class="stat-card"><div class="stat-num" style="color:#fcd34d;" id="s-contometros">—</div><div class="stat-lbl">Contómetros</div></div>
+    <div class="stat-card"><div class="stat-num c-purple" id="s-balanzas">—</div><div class="stat-lbl">Balanzas</div></div>
+  </div>
+
+  <!-- FILTROS -->
+  <div class="filter-bar">
+    <div class="filter-row">
+      <div class="filter-group">
+        <span class="filter-label">Módulo</span>
+        <select class="fsel" id="f-modulo" onchange="applyFilters()">
+          <option value="">Todos los módulos</option>
+          <option value="montacargas">Montacargas</option>
+          <option value="contometros">Contómetros</option>
+          <option value="balanzas">Balanzas</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <span class="filter-label">Tipo de evento</span>
+        <select class="fsel" id="f-tipo" onchange="applyFilters()">
+          <option value="">Todos los tipos</option>
+          <option value="calibracion">Calibración</option>
+          <option value="mantenimiento">Mantenimiento</option>
+          <option value="combo">Calibración + Mantenimiento</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <span class="filter-label">Centro / Planta</span>
+        <select class="fsel" id="f-centro" onchange="applyFilters()">
+          <option value="">Todos los centros</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <span class="filter-label">Solo con documento</span>
+        <select class="fsel" id="f-doc" onchange="applyFilters()">
+          <option value="con">Con documento adjunto</option>
+          <option value="">Todos (con y sin)</option>
+        </select>
+      </div>
+      <div class="filter-group" style="flex:2;min-width:200px;">
+        <span class="filter-label">Buscar</span>
+        <input class="fsearch" id="f-search" placeholder="Código, equipo, supervisor..." oninput="applyFilters()">
+      </div>
+      <span class="filter-count" id="filter-count"></span>
+    </div>
+  </div>
+
+  <!-- TABLA -->
+  <div class="doc-table-wrap">
+    <table class="doc-table">
+      <thead>
+        <tr>
+          <th>Módulo</th>
+          <th>Equipo / Código</th>
+          <th>Tipo de evento</th>
+          <th>Centro / Planta</th>
+          <th>Fecha</th>
+          <th>Supervisor</th>
+          <th>Documento</th>
+        </tr>
+      </thead>
+      <tbody id="doc-tbody"></tbody>
+    </table>
+    <div id="empty-state" class="empty-state" style="display:none;">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+      <p id="empty-msg">No se encontraron documentos</p>
+    </div>
+    <div class="pagination" id="pagination">
+      <span class="page-info" id="page-info"></span>
+      <div class="page-btns" id="page-btns"></div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script>
+const SUPA_URL='https://njmswjinwrcxsfduchsc.supabase.co';
+const SUPA_KEY='sb_publishable_KKD-gJzg0Urws7ff-h5XFg_91sL146J';
+const sb=supabase.createClient(SUPA_URL,SUPA_KEY);
+
+const PAGE_SIZE=20;
+let allDocs=[], filtered=[], currentPage=1;
+
+function sync(on){document.getElementById('sync-bar').classList.toggle('on',on);}
+function dbOk(t){const d=document.getElementById('db-dot');d.className='db-dot ok';const tx=document.getElementById('db-txt');tx.textContent=t;tx.style.color='var(--green)';}
+function dbErr(t){const d=document.getElementById('db-dot');d.className='db-dot err';const tx=document.getElementById('db-txt');tx.textContent=t;tx.style.color='var(--red)';}
+const fD=d=>{if(!d)return'—';try{const p=d.split('T')[0].split('-');return`${p[2]}/${p[1]}/${p[0]}`;}catch{return d;}};
+
+function tipoLabel(t){
+  if(!t) return{label:'—',cls:''};
+  const tl=t.toLowerCase();
+  if(tl.includes('calibracion')&&tl.includes('mantenimiento')) return{label:'Cal. + Mant.',cls:'tipo-combo'};
+  if(tl.includes('calibracion')) return{label:'Calibración',cls:'tipo-cal'};
+  if(tl.includes('mantenimiento')) return{label:'Mantenimiento',cls:'tipo-mant'};
+  return{label:t,cls:''};
+}
+function tipoKey(t){
+  if(!t) return '';
+  const tl=t.toLowerCase();
+  if(tl.includes('calibracion')&&tl.includes('mantenimiento')) return 'combo';
+  if(tl.includes('calibracion')) return 'calibracion';
+  if(tl.includes('mantenimiento')) return 'mantenimiento';
+  return '';
+}
+function extIcon(url){
+  if(!url) return '';
+  const ext=url.split('.').pop().split('?')[0].toLowerCase();
+  if(ext==='pdf') return '📄';
+  if(['jpg','jpeg','png','webp'].includes(ext)) return '🖼';
+  return '📎';
+}
+
+async function cargarDatos(){
+  sync(true);
+  try{
+    // Montacargas → mantenimientos con certificado
+    const{data:m1,error:er1}=await sb.from('mantenimientos')
+      .select('id,equipo_id,placa,cd,tipo,marca,modelo,fecha_mantenimiento,supervisor,certificado_url')
+      .order('fecha_mantenimiento',{ascending:false});
+    if(er1) throw er1;
+
+    // Contómetros → contometros_registros
+    const{data:m2,error:er2}=await sb.from('contometros_registros')
+      .select('id,contometro_id,codigo,centro,tipo_evento,fecha_ejecutada,supervisor,certificado_url')
+      .order('fecha_ejecutada',{ascending:false});
+    if(er2) throw er2;
+
+    // Balanzas → calibraciones
+    const{data:m3,error:er3}=await sb.from('calibraciones')
+      .select('id,balanza_id,codigo,planta,tipo_evento,fecha_ejecutada,supervisor,certificado_url')
+      .order('fecha_ejecutada',{ascending:false});
+    if(er3) throw er3;
+
+    // Normalizar a estructura común
+    const docs=[];
+    (m1||[]).forEach(r=>docs.push({
+      modulo:'montacargas',
+      equipo_id:r.equipo_id,
+      codigo:r.placa||r.equipo_id,
+      descripcion:`${r.marca||''} ${r.modelo||''}`.trim(),
+      centro:r.cd||'—',
+      tipo:r.tipo||'mantenimiento',
+      fecha:r.fecha_mantenimiento,
+      supervisor:r.supervisor||'—',
+      cert_url:r.certificado_url||null,
+      id:r.id
+    }));
+    (m2||[]).forEach(r=>docs.push({
+      modulo:'contometros',
+      equipo_id:r.contometro_id,
+      codigo:r.codigo||r.contometro_id,
+      descripcion:'Contómetro',
+      centro:r.centro||'—',
+      tipo:r.tipo_evento||'—',
+      fecha:r.fecha_ejecutada,
+      supervisor:r.supervisor||'—',
+      cert_url:r.certificado_url||null,
+      id:r.id
+    }));
+    (m3||[]).forEach(r=>docs.push({
+      modulo:'balanzas',
+      equipo_id:r.balanza_id,
+      codigo:r.codigo||r.balanza_id,
+      descripcion:'Balanza',
+      centro:r.planta||'—',
+      tipo:r.tipo_evento||'—',
+      fecha:r.fecha_ejecutada,
+      supervisor:r.supervisor||'—',
+      cert_url:r.certificado_url||null,
+      id:r.id
+    }));
+
+    // Ordenar por fecha desc
+    docs.sort((a,b)=>(b.fecha||'').localeCompare(a.fecha||''));
+    allDocs=docs;
+
+    // Poblar centros únicos
+    const centros=[...new Set(docs.map(d=>d.centro).filter(c=>c&&c!=='—'))].sort();
+    const sel=document.getElementById('f-centro');
+    sel.innerHTML='<option value="">Todos los centros</option>';
+    centros.forEach(c=>{ const o=document.createElement('option');o.value=c;o.textContent=c;sel.appendChild(o); });
+
+    dbOk('Supabase ✓');
+    renderStats();
+    applyFilters();
+  }catch(err){
+    dbErr('Error conexión');
+    showToast('Error: '+err.message,true);
+  }
+  sync(false);
+}
+
+function renderStats(){
+  const con=allDocs.filter(d=>d.cert_url);
+  document.getElementById('s-total').textContent=con.length;
+  document.getElementById('s-montacargas').textContent=con.filter(d=>d.modulo==='montacargas').length;
+  document.getElementById('s-contometros').textContent=con.filter(d=>d.modulo==='contometros').length;
+  document.getElementById('s-balanzas').textContent=con.filter(d=>d.modulo==='balanzas').length;
+  document.getElementById('hdr-sub').textContent=`${con.length} documentos adjuntos · ${allDocs.length} registros totales · ${new Date().toLocaleDateString('es-PE',{day:'2-digit',month:'short',year:'numeric'})}`;
+}
+
+function applyFilters(){
+  const mod=document.getElementById('f-modulo').value;
+  const tipo=document.getElementById('f-tipo').value;
+  const centro=document.getElementById('f-centro').value;
+  const doc=document.getElementById('f-doc').value;
+  const q=document.getElementById('f-search').value.toLowerCase();
+  filtered=allDocs.filter(d=>{
+    if(mod && d.modulo!==mod) return false;
+    if(tipo && tipoKey(d.tipo)!==tipo) return false;
+    if(centro && d.centro!==centro) return false;
+    if(doc==='con' && !d.cert_url) return false;
+    if(q && ![d.codigo,d.descripcion,d.centro,d.supervisor,d.modulo].join(' ').toLowerCase().includes(q)) return false;
+    return true;
+  });
+  document.getElementById('filter-count').textContent=`${filtered.length} registros`;
+  currentPage=1;
+  renderTable();
+}
+
+function renderTable(){
+  const tbody=document.getElementById('doc-tbody');
+  const empty=document.getElementById('empty-state');
+  const total=filtered.length;
+  const totalPages=Math.max(1,Math.ceil(total/PAGE_SIZE));
+  if(currentPage>totalPages) currentPage=totalPages;
+  const start=(currentPage-1)*PAGE_SIZE;
+  const page=filtered.slice(start,start+PAGE_SIZE);
+
+  if(page.length===0){
+    tbody.innerHTML='';
+    empty.style.display='block';
+    document.getElementById('empty-msg').textContent=
+      document.getElementById('f-doc').value==='con'
+        ? 'No hay documentos adjuntos con estos filtros'
+        : 'No se encontraron registros con estos filtros';
+    document.getElementById('pagination').style.display='none';
+    return;
+  }
+  empty.style.display='none';
+  document.getElementById('pagination').style.display='flex';
+
+  tbody.innerHTML=page.map(d=>{
+    const t=tipoLabel(d.tipo);
+    const modCls=d.modulo==='montacargas'?'mod-montacargas':d.modulo==='contometros'?'mod-contometros':'mod-balanzas';
+    const modLbl=d.modulo==='montacargas'?'Montacargas':d.modulo==='contometros'?'Contómetros':'Balanzas';
+    const btnDoc=d.cert_url
+      ? `<a href="${d.cert_url}" target="_blank" class="btn-dl" title="Abrir / descargar documento">
+           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+           ${extIcon(d.cert_url)} Descargar
+         </a>`
+      : `<span class="no-doc"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="13" height="13"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg> Sin documento</span>`;
+    return `<tr>
+      <td><span class="modulo-badge ${modCls}">${modLbl}</span></td>
+      <td><div class="code-cell">${d.codigo}</div><div class="equipo-sub">${d.descripcion}</div></td>
+      <td>${t.label?`<span class="tipo-badge ${t.cls}">${t.label}</span>`:'—'}</td>
+      <td class="date-cell">${d.centro}</td>
+      <td class="date-cell">${fD(d.fecha)}</td>
+      <td style="font-size:12px;color:var(--text2);">${d.supervisor}</td>
+      <td>${btnDoc}</td>
+    </tr>`;
+  }).join('');
+
+  // Paginación
+  document.getElementById('page-info').textContent=`${start+1}–${Math.min(start+PAGE_SIZE,total)} de ${total}`;
+  const btns=document.getElementById('page-btns');
+  btns.innerHTML='';
+  const addBtn=(lbl,pg,active=false,disabled=false)=>{
+    const b=document.createElement('button');
+    b.className='page-btn'+(active?' active':'');
+    b.textContent=lbl; b.disabled=disabled;
+    b.onclick=()=>{currentPage=pg;renderTable();window.scrollTo({top:0,behavior:'smooth'});};
+    btns.appendChild(b);
+  };
+  addBtn('‹ Ant',currentPage-1,false,currentPage===1);
+  // páginas cercanas
+  for(let p=Math.max(1,currentPage-2);p<=Math.min(totalPages,currentPage+2);p++){
+    addBtn(p,p,p===currentPage);
+  }
+  addBtn('Sig ›',currentPage+1,false,currentPage===totalPages);
+}
+
+function showToast(msg,err=false){
+  const t=document.getElementById('toast');
+  document.getElementById('toast-msg').textContent=msg;
+  t.className='toast show '+(err?'err':'ok');
+  setTimeout(()=>t.classList.remove('show'),3500);
+}
+
+window.addEventListener('DOMContentLoaded',cargarDatos);
+</script>
+</body>
+</html>
